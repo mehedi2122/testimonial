@@ -31,13 +31,13 @@ Each group ends with a green local `composer ci:check` before the next one start
 
 ## 4. Custom rule: SubmissionValue (per space_fields.type)
 
-- [ ] 4.1 `SubmissionValue` validates `value` against `space_fields.type`
-- [ ] 4.2 `type = text` → string, max 500 chars
-- [ ] 4.3 `type = url` → valid URL, max 2048 chars
-- [ ] 4.4 `type = number` → numeric, between -1e9 and 1e9
-- [ ] 4.5 `type = email` → never (rejected; structural §31)
-- [ ] 4.6 `type = rating` → never for custom fields
-- [ ] 4.7 Unit test covers each type and the rejection paths
+- [x] 4.1 `SubmissionValue` validates `value` against `space_fields.type`
+- [x] 4.2 `type = text` → string, max 500 chars
+- [x] 4.3 `type = url` → valid URL, max 2048 chars
+- [x] 4.4 `type = number` → numeric, between -1e9 and 1e9
+- [x] 4.5 `type = email` → never (rejected; structural §31)
+- [x] 4.6 `type = rating` → never for custom fields
+- [x] 4.7 Unit test covers each type and the rejection paths
 
 ## 5. Custom rule: FieldTypeSpaceFieldVisibility
 
