@@ -13,13 +13,13 @@
 1. [Reference Scenario](#1-reference-scenario)
 2. [Entity Overview (ERD)](#2-entity-overview-erd)
 3. [Tables](#3-tables)
-   - [3.1 users](#31-users)
-   - [3.2 spaces](#32-spaces)
-   - [3.3 space_fields](#33-space_fields)
-   - [3.4 testimonials](#34-testimonials)
-   - [3.5 testimonial_values](#35-testimonial_values-eav-table)
-   - [3.6 embed_configurations](#36-embed_configurations)
-   - [3.7 Cashier Tables](#37-cashier-tables)
+    - [3.1 users](#31-users)
+    - [3.2 spaces](#32-spaces)
+    - [3.3 space_fields](#33-space_fields)
+    - [3.4 testimonials](#34-testimonials)
+    - [3.5 testimonial_values](#35-testimonial_values-eav-table)
+    - [3.6 embed_configurations](#36-embed_configurations)
+    - [3.7 Cashier Tables](#37-cashier-tables)
 4. [Key Queries](#4-key-queries)
 5. [Plans and Limits](#5-plans-and-limits)
 6. [Security and Authorization](#6-security-and-authorization)
@@ -37,12 +37,12 @@ This is the fixture data the seeders will produce and the reference set for quer
 
 ### Users, Spaces, and Testimonials
 
-| User | Plan | Space | Slug | Testimonials |
-|---|---|---|---|---|
-| Maya Sharma (maya@brightcopy.co) | Free | Brightcopy Client Wins | brightcopy-wins | 6 |
-| Maya Sharma | Free | Course Launch Feedback | course-launch | 3 |
-| Dev Okafor (dev@shiplog.io) | Pro | Shiplog Product Reviews | shiplog-reviews | 140 |
-| Dev Okafor | Pro | Shiplog Beta Testers | beta-testers | 12 |
+| User                             | Plan | Space                   | Slug            | Testimonials |
+| -------------------------------- | ---- | ----------------------- | --------------- | ------------ |
+| Maya Sharma (maya@brightcopy.co) | Free | Brightcopy Client Wins  | brightcopy-wins | 6            |
+| Maya Sharma                      | Free | Course Launch Feedback  | course-launch   | 3            |
+| Dev Okafor (dev@shiplog.io)      | Pro  | Shiplog Product Reviews | shiplog-reviews | 140          |
+| Dev Okafor                       | Pro  | Shiplog Beta Testers    | beta-testers    | 12           |
 
 ### Why These Counts
 
@@ -52,13 +52,13 @@ This is the fixture data the seeders will produce and the reference set for quer
 
 ### Visibility Rule Reference
 
-| # | Respondent | consent_given | is_wall_of_love | is_hidden | deleted_at | is_public |
-|---|---|---|---|---|---|---|
-| 41 | Priya Raman | 1 | 1 | 0 | none | 1 |
-| 42 | Tom Alvarez | 1 | 0 | 0 | none | 0 |
-| 43 | Sara Nkemi | 0 | 0 | 0 | none | 0 |
-| 44 | Ben Fischer | 1 | 1 | 1 | none | 0 (suppressed, publish intact) |
-| 45 | Ana Ruiz | 1 | 1 | 0 | set | 0 |
+| #   | Respondent  | consent_given | is_wall_of_love | is_hidden | deleted_at | is_public                      |
+| --- | ----------- | ------------- | --------------- | --------- | ---------- | ------------------------------ |
+| 41  | Priya Raman | 1             | 1               | 0         | none       | 1                              |
+| 42  | Tom Alvarez | 1             | 0               | 0         | none       | 0                              |
+| 43  | Sara Nkemi  | 0             | 0               | 0         | none       | 0                              |
+| 44  | Ben Fischer | 1             | 1               | 1         | none       | 0 (suppressed, publish intact) |
+| 45  | Ana Ruiz    | 1             | 1               | 0         | set        | 0                              |
 
 The rule: `is_public = consent_given AND is_wall_of_love AND NOT is_hidden AND NOT soft_deleted`
 
@@ -70,15 +70,15 @@ The rule: `is_public = consent_given AND is_wall_of_love AND NOT is_hidden AND N
 
 ### Relationships
 
-| From | Label | To | Cardinality |
-|---|---|---|---|
-| users | owns | spaces | 1 to 0..many |
-| users | Cashier | subscriptions | 1 to 0..many |
-| spaces | collects | testimonials | 1 to 0..many |
-| spaces | defines | space_fields | 1 to 0..many |
-| spaces | configures | embed_configurations | 1 to 0..1 |
-| testimonials | answers | testimonial_values | 1 to 0..many |
-| space_fields | typed by | testimonial_values | 1 to 0..many |
+| From         | Label      | To                   | Cardinality  |
+| ------------ | ---------- | -------------------- | ------------ |
+| users        | owns       | spaces               | 1 to 0..many |
+| users        | Cashier    | subscriptions        | 1 to 0..many |
+| spaces       | collects   | testimonials         | 1 to 0..many |
+| spaces       | defines    | space_fields         | 1 to 0..many |
+| spaces       | configures | embed_configurations | 1 to 0..1    |
+| testimonials | answers    | testimonial_values   | 1 to 0..many |
+| space_fields | typed by   | testimonial_values   | 1 to 0..many |
 
 ### Visual ERD
 
@@ -139,19 +139,19 @@ Standard Laravel auth plus Cashier columns. The `User` model is the Billable mod
 **No `plan` column** — plan is derived from `subscribed('default')` (see §5.1).
 **No `timezone` column** — all dates are UTC (see §7.1).
 
-| Column | Type | Notes |
-|---|---|---|
-| id | bigint PK | |
-| name | varchar(120) | |
-| email | varchar(180) | unique |
-| email_verified_at | timestamp null | per PRD §4 |
-| password | varchar(255) | |
-| remember_token | varchar(100) null | |
-| `stripe_id` | varchar(255) null | Cashier, indexed |
-| `pm_type` | varchar(255) null | Cashier |
-| `pm_last_four` | varchar(4) null | Cashier |
-| `trial_ends_at` | timestamp null | Cashier |
-| created_at / updated_at | timestamp | |
+| Column                  | Type              | Notes            |
+| ----------------------- | ----------------- | ---------------- |
+| id                      | bigint PK         |                  |
+| name                    | varchar(120)      |                  |
+| email                   | varchar(180)      | unique           |
+| email_verified_at       | timestamp null    | per PRD §4       |
+| password                | varchar(255)      |                  |
+| remember_token          | varchar(100) null |                  |
+| `stripe_id`             | varchar(255) null | Cashier, indexed |
+| `pm_type`               | varchar(255) null | Cashier          |
+| `pm_last_four`          | varchar(4) null   | Cashier          |
+| `trial_ends_at`         | timestamp null    | Cashier          |
+| created_at / updated_at | timestamp         |                  |
 
 **Indexes**: `unique(email)`, `index(stripe_id)`
 
@@ -165,29 +165,29 @@ An individual testimonial collection page owned by a User.
 
 **No `field_configuration` column** — replaced by the `space_fields` table (see §3.3).
 
-| Column | Type | Notes |
-|---|---|---|
-| id | bigint PK | |
-| user_id | bigint FK → users.id | cascade on delete |
-| name | varchar(120) | internal identification (owner-only) |
-| slug | varchar(60) | globally unique |
-| public_id | char(12) | unique, non-sequential, immutable |
-| title | varchar(160) | public-facing |
-| subtitle | varchar(255) null | public-facing |
-| ask | text | the testimonial request |
-| theme | enum | `minimal_light` \| `minimal_dark` \| `soft_color` |
-| rating_enabled | boolean | default `true` |
-| created_at / updated_at | timestamp | |
-| deleted_at | timestamp null | soft delete |
+| Column                  | Type                 | Notes                                             |
+| ----------------------- | -------------------- | ------------------------------------------------- |
+| id                      | bigint PK            |                                                   |
+| user_id                 | bigint FK → users.id | cascade on delete                                 |
+| name                    | varchar(120)         | internal identification (owner-only)              |
+| slug                    | varchar(60)          | globally unique                                   |
+| public_id               | char(12)             | unique, non-sequential, immutable                 |
+| title                   | varchar(160)         | public-facing                                     |
+| subtitle                | varchar(255) null    | public-facing                                     |
+| ask                     | text                 | the testimonial request                           |
+| theme                   | enum                 | `minimal_light` \| `minimal_dark` \| `soft_color` |
+| rating_enabled          | boolean              | default `true`                                    |
+| created_at / updated_at | timestamp            |                                                   |
+| deleted_at              | timestamp null       | soft delete                                       |
 
 #### Two Public Identifiers, Deliberately
 
 They cannot be one column. If embeds used slug, renaming `brightcopy-wins` to `client-wins` would silently break every embed already live on Maya's clients' sites.
 
-| Column | Job | Audience | Mutable? |
-|---|---|---|---|
-| slug | Shareable collection URL: `/s/brightcopy-wins` | respondents | yes, user-editable |
-| public_id | Embed key: `<div data-testimonial-space="9xKf2mQr7bZa">` | external sites | never |
+| Column    | Job                                                      | Audience       | Mutable?           |
+| --------- | -------------------------------------------------------- | -------------- | ------------------ |
+| slug      | Shareable collection URL: `/s/brightcopy-wins`           | respondents    | yes, user-editable |
+| public_id | Embed key: `<div data-testimonial-space="9xKf2mQr7bZa">` | external sites | never              |
 
 #### Slug Rules
 
@@ -208,29 +208,29 @@ Holds both predefined and user-defined respondent fields, uniformly. **Custom fi
 
 **Indexes**: `unique(space_id, field_key)`, `index(space_id, sort_order)`
 
-| Column | Type | Notes |
-|---|---|---|
-| id | bigint PK | |
-| space_id | bigint FK → spaces.id | cascade on delete |
-| field_key | varchar(40) | machine key, e.g., `company_name`, `job_title` |
-| label | varchar(80) | shown on the public form |
-| type | enum | `text` \| `url` \| `email` \| `image` \| `number` |
-| mode | enum | `off` \| `optional` \| `required`, default `off` |
-| sort_order | smallint unsigned | default 0 |
-| show_in_embed | boolean | default `true` |
-| created_at / updated_at | timestamp | |
-| deleted_at | timestamp null | soft delete (see §9.1) |
+| Column                  | Type                  | Notes                                             |
+| ----------------------- | --------------------- | ------------------------------------------------- |
+| id                      | bigint PK             |                                                   |
+| space_id                | bigint FK → spaces.id | cascade on delete                                 |
+| field_key               | varchar(40)           | machine key, e.g., `company_name`, `job_title`    |
+| label                   | varchar(80)           | shown on the public form                          |
+| type                    | enum                  | `text` \| `url` \| `email` \| `image` \| `number` |
+| mode                    | enum                  | `off` \| `optional` \| `required`, default `off`  |
+| sort_order              | smallint unsigned     | default 0                                         |
+| show_in_embed           | boolean               | default `true`                                    |
+| created_at / updated_at | timestamp             |                                                   |
+| deleted_at              | timestamp null        | soft delete (see §9.1)                            |
 
 #### Why `mode` Is One Enum, Not `enabled` + `required`
 
 Two booleans allow four states, and one is nonsense:
 
-| enabled | required | Meaning |
-|---|---|---|
-| 1 | 1 | shown, must fill ✅ |
-| 1 | 0 | shown, optional ✅ |
-| 0 | 0 | hidden ✅ |
-| 0 | 1 | hidden but mandatory — an unsubmittable form 💥 |
+| enabled | required | Meaning                                         |
+| ------- | -------- | ----------------------------------------------- |
+| 1       | 1        | shown, must fill ✅                             |
+| 1       | 0        | shown, optional ✅                              |
+| 0       | 0        | hidden ✅                                       |
+| 0       | 1        | hidden but mandatory — an unsubmittable form 💥 |
 
 One enum makes the fourth row unrepresentable rather than merely discouraged.
 
@@ -238,11 +238,11 @@ One enum makes the fourth row unrepresentable rather than merely discouraged.
 
 Every new Space gets three predefined rows at `mode = 'off'`:
 
-| field_key | label | type | sort_order |
-|---|---|---|---|
-| company_name | Company name | text | 10 |
-| social_url | Social profile URL | url | 20 |
-| profile_photo | Profile photo | image | 30 |
+| field_key     | label              | type  | sort_order |
+| ------------- | ------------------ | ----- | ---------- |
+| company_name  | Company name       | text  | 10         |
+| social_url    | Social profile URL | url   | 20         |
+| profile_photo | Profile photo      | image | 30         |
 
 Custom fields append with `sort_order` above 30.
 
@@ -263,26 +263,27 @@ They are columns on `testimonials`. See §3.4 and the decision log #5.
 A single piece of feedback submitted by a respondent through a Space's public form.
 
 **Indexes**:
+
 - `idx_public` (`(space_id, is_public, is_favorite, submitted_at)`) — embed reads, index-ordered, no filesort
 - `idx_space_live` (`(space_id, deleted_at, submitted_at)`) — limit count, collection graph, inbox
 - `idx_respondents` (`(space_id, deleted_at, email)`) — `COUNT(DISTINCT email)`
 
-| Column | Type | Notes |
-|---|---|---|
-| id | bigint PK | |
-| space_id | bigint FK → spaces.id | cascade on delete |
-| name | varchar(120) | always required (PRD §13) |
-| email | varchar(180) | always required, never public (PRD §13) |
-| testimonial | text | always required |
-| rating | tinyint unsigned null | 1..5, null when Space disables rating |
-| consent_given | boolean | default `false` |
-| is_favorite | boolean | default `false`, ordering only |
-| is_wall_of_love | boolean | default `false` |
-| is_hidden | boolean | default `false` |
-| is_public | boolean STORED generated | see below |
-| submitted_at | timestamp | domain timestamp, distinct from `created_at` |
-| created_at / updated_at | timestamp | |
-| deleted_at | timestamp null | soft delete (PRD §15) |
+| Column                  | Type                     | Notes                                        |
+| ----------------------- | ------------------------ | -------------------------------------------- |
+| id                      | bigint PK                |                                              |
+| space_id                | bigint FK → spaces.id    | cascade on delete                            |
+| name                    | varchar(120)             | always required (PRD §13)                    |
+| email                   | varchar(180)             | always required, never public (PRD §13)      |
+| testimonial             | text                     | always required                              |
+| rating                  | tinyint unsigned null    | 1..5, null when Space disables rating        |
+| consent_given           | boolean                  | default `false`                              |
+| is_favorite             | boolean                  | default `false`, ordering only               |
+| is_wall_of_love         | boolean                  | default `false`                              |
+| is_hidden               | boolean                  | default `false`                              |
+| is_public               | boolean STORED generated | see below                                    |
+| submitted_at            | timestamp                | domain timestamp, distinct from `created_at` |
+| created_at / updated_at | timestamp                |                                              |
+| deleted_at              | timestamp null           | soft delete (PRD §15)                        |
 
 #### The `is_public` Generated Column
 
@@ -322,7 +323,7 @@ Hide is an override layered on a publish decision, not a replacement. With one v
 
 #### Why `name` and `email` Are Columns, Not `space_fields` Rows
 
-1. **They are always enabled and required.** A field that cannot vary is part of what a testimonial *is*, not configuration.
+1. **They are always enabled and required.** A field that cannot vary is part of what a testimonial _is_, not configuration.
 2. **It makes the email guarantee structural, not procedural.** `testimonial_values` never contains an email, so an embed that dumps every value still cannot leak one.
 3. **It keeps "unique respondents" an indexed aggregate**:
 
@@ -347,23 +348,23 @@ Answers to `space_fields`. **Never contains an email address** (structural guara
 
 **Indexes**: `unique(testimonial_id, space_field_id)`, `index(space_field_id)`
 
-| Column | Type | Notes |
-|---|---|---|
-| id | bigint PK | |
-| testimonial_id | bigint FK → testimonials.id | cascade on delete |
-| space_field_id | bigint FK → space_fields.id | restrict (§9.1) |
-| value | text null | for `type = 'image'`, the storage path |
-| created_at / updated_at | timestamp | |
+| Column                  | Type                        | Notes                                  |
+| ----------------------- | --------------------------- | -------------------------------------- |
+| id                      | bigint PK                   |                                        |
+| testimonial_id          | bigint FK → testimonials.id | cascade on delete                      |
+| space_field_id          | bigint FK → space_fields.id | restrict (§9.1)                        |
+| value                   | text null                   | for `type = 'image'`, the storage path |
+| created_at / updated_at | timestamp                   |                                        |
 
 #### Example: Priya's Submission to Shiplog Product Reviews
 
 Her name, email, testimonial text, and rating are columns on `testimonials`, not here:
 
-| testimonial_id | space_field_id | field | value |
-|---|---|---|---|
-| 41 | 9 | company_name | Nimbus Dev |
-| 41 | 10 | social_url | https://nimbus.dev/priya |
-| 41 | 12 | job_title (custom) | VP Engineering |
+| testimonial_id | space_field_id | field              | value                    |
+| -------------- | -------------- | ------------------ | ------------------------ |
+| 41             | 9              | company_name       | Nimbus Dev               |
+| 41             | 10             | social_url         | https://nimbus.dev/priya |
+| 41             | 12             | job_title (custom) | VP Engineering           |
 
 ---
 
@@ -373,29 +374,29 @@ Her name, email, testimonial text, and rating are columns on `testimonials`, not
 
 **No `display_options` JSON column** (divergence 8.4).
 
-| Column | Type | Notes |
-|---|---|---|
-| id | bigint PK | |
-| space_id | bigint FK → spaces.id | **unique**, cascade on delete |
-| layout | enum | `masonry` \| `carousel`, default `masonry` |
-| dark_mode | boolean | default `false` |
-| animation_enabled | boolean | default `true` |
-| background_color | char(7) null | `#RRGGBB` |
-| item_limit | smallint unsigned | default 12, capped at 50 |
-| show_rating | boolean | default `true` |
-| created_at / updated_at | timestamp | |
+| Column                  | Type                  | Notes                                      |
+| ----------------------- | --------------------- | ------------------------------------------ |
+| id                      | bigint PK             |                                            |
+| space_id                | bigint FK → spaces.id | **unique**, cascade on delete              |
+| layout                  | enum                  | `masonry` \| `carousel`, default `masonry` |
+| dark_mode               | boolean               | default `false`                            |
+| animation_enabled       | boolean               | default `true`                             |
+| background_color        | char(7) null          | `#RRGGBB`                                  |
+| item_limit              | smallint unsigned     | default 12, capped at 50                   |
+| show_rating             | boolean               | default `true`                             |
+| created_at / updated_at | timestamp             |                                            |
 
 #### Where Visibility Toggles Live
 
 PRD §20's three hardcoded toggles break with custom fields (a "Job Title" answer would be collected but permanently unpublishable). Each toggle sits next to the thing it governs, so there is no whitelist to forget:
 
-| What | Storage | Visibility toggle |
-|---|---|---|
-| Respondent name | `testimonials.name` | always shown |
-| Testimonial text | `testimonials.testimonial` | always shown |
-| Email | `testimonials.email` | never shown, not addressable |
-| Rating | `testimonials.rating` | `embed_configurations.show_rating` |
-| Company, social, photo, custom | `space_fields` rows | `space_fields.show_in_embed` |
+| What                           | Storage                    | Visibility toggle                  |
+| ------------------------------ | -------------------------- | ---------------------------------- |
+| Respondent name                | `testimonials.name`        | always shown                       |
+| Testimonial text               | `testimonials.testimonial` | always shown                       |
+| Email                          | `testimonials.email`       | never shown, not addressable       |
+| Rating                         | `testimonials.rating`      | `embed_configurations.show_rating` |
+| Company, social, photo, custom | `space_fields` rows        | `space_fields.show_in_embed`       |
 
 #### Item Limit
 
@@ -555,22 +556,22 @@ Choosing columns over pure EAV for name/email turned §31 from a policy every qu
 
 ### Authorization Summary
 
-| Requirement | How it is met |
-|---|---|
-| Users access only their own Spaces | `$space->user_id === $user->id`; single-hop policies |
-| Public IDs non-sequential, hard to guess | `public_id char(12)`, random, unique, immutable |
-| Email never exposed via embeds | **Structural**: email is a column, `testimonial_values` cannot hold one; API Resource whitelist |
-| Escape/sanitize testimonial content | Application layer: sanitize on write, escape on render |
-| Restrict photo type and size | `space_fields.type = 'image'`; JPG/PNG/WebP + size cap validated on upload |
-| Rate limits on auth + public submission | Route middleware |
-| Stripe webhook signatures verified | Cashier |
-| All dates in UTC | All timestamps UTC (§7.1) |
+| Requirement                              | How it is met                                                                                   |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Users access only their own Spaces       | `$space->user_id === $user->id`; single-hop policies                                            |
+| Public IDs non-sequential, hard to guess | `public_id char(12)`, random, unique, immutable                                                 |
+| Email never exposed via embeds           | **Structural**: email is a column, `testimonial_values` cannot hold one; API Resource whitelist |
+| Escape/sanitize testimonial content      | Application layer: sanitize on write, escape on render                                          |
+| Restrict photo type and size             | `space_fields.type = 'image'`; JPG/PNG/WebP + size cap validated on upload                      |
+| Rate limits on auth + public submission  | Route middleware                                                                                |
+| Stripe webhook signatures verified       | Cashier                                                                                         |
+| All dates in UTC                         | All timestamps UTC (§7.1)                                                                       |
 
 ---
 
 ## 7. Accepted Limitations
 
-*"Known, decided, and recorded so they are not rediscovered as bugs."*
+_"Known, decided, and recorded so they are not rediscovered as bugs."_
 
 ### 7.1 Graph Buckets by UTC Day
 
@@ -580,9 +581,9 @@ Choosing columns over pure EAV for name/email turned §31 from a policy every qu
 
 **Exposure by timezone offset**:
 
-| User's offset | Submissions on the wrong day |
-|---|---|
-| UTC+1 (Lagos) | 23:00 to 00:00 UTC daily |
+| User's offset       | Submissions on the wrong day                                      |
+| ------------------- | ----------------------------------------------------------------- |
+| UTC+1 (Lagos)       | 23:00 to 00:00 UTC daily                                          |
 | UTC-7 (Los Angeles) | every submission 17:00 to 24:00 local, roughly a third of the day |
 
 ---
@@ -597,14 +598,14 @@ Stripe retries with backoff for up to three days. Every handler we own must be h
 
 **Stripe doesn't guarantee order** (`subscription.updated` can land before `created`). Cashier's `updateOrCreate` mostly absorbs this. The belt-and-braces fix (treat the webhook as a signal and re-read state from the Stripe API) is noted, not built.
 
-| Event | Handler | Replay-safe? |
-|---|---|---|
-| `customer.subscription.created` | Cashier `updateOrCreate` | ✅ by construction |
-| `customer.subscription.updated` | Cashier `updateOrCreate` | ✅ by construction |
-| `customer.subscription.deleted` | Cashier | ✅ by construction |
-| `checkout.session.completed` | ours | ⚠️ only if written that way |
-| `invoice.paid` | ours | ⚠️ only if written that way |
-| `invoice.payment_failed` | ours | ⚠️ only if written that way |
+| Event                           | Handler                  | Replay-safe?                |
+| ------------------------------- | ------------------------ | --------------------------- |
+| `customer.subscription.created` | Cashier `updateOrCreate` | ✅ by construction          |
+| `customer.subscription.updated` | Cashier `updateOrCreate` | ✅ by construction          |
+| `customer.subscription.deleted` | Cashier                  | ✅ by construction          |
+| `checkout.session.completed`    | ours                     | ⚠️ only if written that way |
+| `invoice.paid`                  | ours                     | ⚠️ only if written that way |
+| `invoice.payment_failed`        | ours                     | ⚠️ only if written that way |
 
 **If it bites**: a `stripe_events` table with `unique(stripe_event_id)` and INSERT-first (duplicate key = already seen) is additive and race-free.
 
@@ -644,15 +645,15 @@ See §5.4. **Deliberate.**
 
 Items 8.1 to 8.4 are one decision: **custom fields are in scope**, and the flexibility must run the full chain: definition (`space_fields`), storage (`testimonial_values`), display (`show_in_embed`). Otherwise it does not exist at all.
 
-| # | PRD says | This model does | Why |
-|---|---|---|---|
-| 8.1 | §29: `spaces.field_configuration` (JSON) | `space_fields` table | Field set is open; JSON can't describe user-defined fields |
-| 8.2 | §37: "Custom respondent fields" out of scope | In scope | Decided during design; §37 is stale on this line |
-| 8.3 | §29: `testimonials.company_name`, `social_url`, `profile_photo_path` | Moved to `testimonial_values` | Fixed columns can't hold answers to user-defined fields |
-| 8.4 | §29: `embed_configurations.display_options` (JSON) | `space_fields.show_in_embed` + `embed_configurations.show_rating` | Three hardcoded keys can't express visibility for custom fields |
-| 8.5 | §29: no `is_public` | `is_public` STORED generated column | §15's rule enforced in the schema rather than restated at four call sites |
-| 8.6 | §7: Space deletion unspecified | Soft delete added | Without it, Maya at 3/3 on Free can only fix a typo by paying |
-| 8.7 | §29: `rating_enabled` alongside JSON field config | `rating_enabled` retained as a column | Rating is a `testimonials` column, not a `space_fields` row, so the toggle belongs with the data |
+| #   | PRD says                                                             | This model does                                                   | Why                                                                                              |
+| --- | -------------------------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| 8.1 | §29: `spaces.field_configuration` (JSON)                             | `space_fields` table                                              | Field set is open; JSON can't describe user-defined fields                                       |
+| 8.2 | §37: "Custom respondent fields" out of scope                         | In scope                                                          | Decided during design; §37 is stale on this line                                                 |
+| 8.3 | §29: `testimonials.company_name`, `social_url`, `profile_photo_path` | Moved to `testimonial_values`                                     | Fixed columns can't hold answers to user-defined fields                                          |
+| 8.4 | §29: `embed_configurations.display_options` (JSON)                   | `space_fields.show_in_embed` + `embed_configurations.show_rating` | Three hardcoded keys can't express visibility for custom fields                                  |
+| 8.5 | §29: no `is_public`                                                  | `is_public` STORED generated column                               | §15's rule enforced in the schema rather than restated at four call sites                        |
+| 8.6 | §7: Space deletion unspecified                                       | Soft delete added                                                 | Without it, Maya at 3/3 on Free can only fix a typo by paying                                    |
+| 8.7 | §29: `rating_enabled` alongside JSON field config                    | `rating_enabled` retained as a column                             | Rating is a `testimonials` column, not a `space_fields` row, so the toggle belongs with the data |
 
 ---
 
@@ -683,16 +684,16 @@ Soft-deleted testimonials, Spaces, and `space_fields` accumulate indefinitely. P
 
 Deliberately deferred, all additive:
 
-| Want | Path | Cost |
-|---|---|---|
-| Team accounts | Create `accounts`, backfill one per user, add `spaces.account_id`, move Cashier columns off `users` | Moderate: touches live subscription data, so cheaper before revenue scales |
-| Per-user slug namespaces | Add `users.handle`, route `/{handle}/{slug}`, relax `unique(slug)` to `unique(user_id, slug)` | Moderate: breaks existing public URLs |
-| Timezone-correct graphs | Add `users.timezone` + a daily rollup table (`space_id, local_date, count`) | Rebases historical buckets on ship day |
-| Webhook idempotency | `stripe_events` table, `unique(stripe_event_id)`, INSERT-first | Low, additive |
-| Strict limit enforcement | `spaces.testimonials_count` + atomic conditional UPDATE | Low, additive |
-| Multiple embeds per Space | `embed_field_visibility` pivot and a new snippet format (the current `data-testimonial-space` attribute addresses a Space, so the snippet must change first) | Moderate: the blocker is the URL scheme, not the schema |
-| Multiple paid plans | `plans` table + admin UI (build both together, or not at all) | Moderate |
-| Consent audit trail | `consented_at` + `consent_text_version` | **Cannot be backfilled** (see §7.4) |
+| Want                      | Path                                                                                                                                                         | Cost                                                                       |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| Team accounts             | Create `accounts`, backfill one per user, add `spaces.account_id`, move Cashier columns off `users`                                                          | Moderate: touches live subscription data, so cheaper before revenue scales |
+| Per-user slug namespaces  | Add `users.handle`, route `/{handle}/{slug}`, relax `unique(slug)` to `unique(user_id, slug)`                                                                | Moderate: breaks existing public URLs                                      |
+| Timezone-correct graphs   | Add `users.timezone` + a daily rollup table (`space_id, local_date, count`)                                                                                  | Rebases historical buckets on ship day                                     |
+| Webhook idempotency       | `stripe_events` table, `unique(stripe_event_id)`, INSERT-first                                                                                               | Low, additive                                                              |
+| Strict limit enforcement  | `spaces.testimonials_count` + atomic conditional UPDATE                                                                                                      | Low, additive                                                              |
+| Multiple embeds per Space | `embed_field_visibility` pivot and a new snippet format (the current `data-testimonial-space` attribute addresses a Space, so the snippet must change first) | Moderate: the blocker is the URL scheme, not the schema                    |
+| Multiple paid plans       | `plans` table + admin UI (build both together, or not at all)                                                                                                | Moderate                                                                   |
+| Consent audit trail       | `consented_at` + `consent_text_version`                                                                                                                      | **Cannot be backfilled** (see §7.4)                                        |
 
 ---
 
@@ -700,22 +701,22 @@ Deliberately deferred, all additive:
 
 The full set of agreed design decisions, with rejected alternatives:
 
-| # | Decision | Alternatives rejected |
-|---|---|---|
-| 1 | Space belongs directly to User; Cashier Billable on User | Account/workspace layer; hybrid `user_id` + nullable `account_id` |
-| 2 | Slug globally unique, route `/s/{slug}`; `public_id` immutable embed key | Per-user slugs + `users.handle`; `public_id` in the public URL |
-| 3 | `space_fields` normalized table | JSON `field_configuration`; explicit enum columns per field |
-| 4 | Open field set: custom fields in scope, `testimonial_values` EAV | (none listed) |
-| 5 | `name`, `email`, `testimonial`, `rating` as columns; variation in EAV | Pure EAV; all five predefined fields as columns |
-| 6 | `is_public` STORED generated column + `idx_public` | Eloquent scope only; single visibility enum |
-| 7 | UTC-only day bucketing, no `users.timezone` | `users.timezone` + PHP bucketing; `users.timezone` + `CONVERT_TZ` |
-| 8 | Plan enum in code; plan derived from Cashier | `plans` table + `users.plan_id`; denormalized `users.plan` |
-| 9 | Live `COUNT(*)`, no lock, boundary race accepted | `FOR UPDATE` transaction; `spaces.testimonials_count` counter cache |
-| 10 | `space_fields.show_in_embed` + `embed_configurations.show_rating`; `display_options` dropped | `embed_field_visibility` pivot; `display_options` JSON |
-| 11 | Webhook idempotency by natural handler design | `stripe_events` table + unique index; Redis `SETNX` dedup |
-| 12 | Stripe Dashboard as the log of record | Dedicated Stripe log channel; `stripe_events` audit table |
-| 13 | `consent_given` boolean, per PRD | `consented_at`; `consented_at` + `consent_text_version` |
-| 14 | Space soft delete; slug retained; deleted Spaces don't count toward the limit | Hard delete + FK cascade; soft delete + slug mangling + purge job |
+| #   | Decision                                                                                     | Alternatives rejected                                               |
+| --- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| 1   | Space belongs directly to User; Cashier Billable on User                                     | Account/workspace layer; hybrid `user_id` + nullable `account_id`   |
+| 2   | Slug globally unique, route `/s/{slug}`; `public_id` immutable embed key                     | Per-user slugs + `users.handle`; `public_id` in the public URL      |
+| 3   | `space_fields` normalized table                                                              | JSON `field_configuration`; explicit enum columns per field         |
+| 4   | Open field set: custom fields in scope, `testimonial_values` EAV                             | (none listed)                                                       |
+| 5   | `name`, `email`, `testimonial`, `rating` as columns; variation in EAV                        | Pure EAV; all five predefined fields as columns                     |
+| 6   | `is_public` STORED generated column + `idx_public`                                           | Eloquent scope only; single visibility enum                         |
+| 7   | UTC-only day bucketing, no `users.timezone`                                                  | `users.timezone` + PHP bucketing; `users.timezone` + `CONVERT_TZ`   |
+| 8   | Plan enum in code; plan derived from Cashier                                                 | `plans` table + `users.plan_id`; denormalized `users.plan`          |
+| 9   | Live `COUNT(*)`, no lock, boundary race accepted                                             | `FOR UPDATE` transaction; `spaces.testimonials_count` counter cache |
+| 10  | `space_fields.show_in_embed` + `embed_configurations.show_rating`; `display_options` dropped | `embed_field_visibility` pivot; `display_options` JSON              |
+| 11  | Webhook idempotency by natural handler design                                                | `stripe_events` table + unique index; Redis `SETNX` dedup           |
+| 12  | Stripe Dashboard as the log of record                                                        | Dedicated Stripe log channel; `stripe_events` audit table           |
+| 13  | `consent_given` boolean, per PRD                                                             | `consented_at`; `consented_at` + `consent_text_version`             |
+| 14  | Space soft delete; slug retained; deleted Spaces don't count toward the limit                | Hard delete + FK cascade; soft delete + slug mangling + purge job   |
 
 ---
 
