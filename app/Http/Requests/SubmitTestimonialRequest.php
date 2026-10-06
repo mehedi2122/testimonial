@@ -6,6 +6,7 @@ namespace App\Http\Requests;
 
 use App\Models\Space;
 use App\Rules\ReservedFieldKey;
+use App\Rules\SubmissionValuesForSpace;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -56,13 +57,20 @@ class SubmitTestimonialRequest extends FormRequest
 
         $ratingRequired = $space instanceof Space && $space->rating_enabled;
 
+        // Build a field_key -> type map for the per-type SubmissionValue rule
+        // (group 4). Only the resolved Space's space_fields count, so a value
+        // targeting a field_key not on this Space is rejected as unknown.
+        $fieldTypeMap = $space instanceof Space
+            ? $space->fields()->pluck('type', 'field_key')->map(fn ($t) => $t->value)->all()
+            : [];
+
         return [
             'name' => ['required', 'string', 'min:2', 'max:120'],
             'email' => ['required', 'email:rfc'],
             'testimonial' => ['required', 'string', 'min:10', 'max:2000'],
             'rating' => [$ratingRequired ? 'required' : 'sometimes', 'integer', 'min:1', 'max:5'],
             'consent_given' => ['required', 'boolean', Rule::in([true])],
-            'values' => ['sometimes', 'array'],
+            'values' => ['sometimes', 'array', new SubmissionValuesForSpace($fieldTypeMap)],
             'values.*' => ['array:field_key,value'],
             'values.*.field_key' => ['required', 'string', 'max:64', new ReservedFieldKey],
             'values.*.value' => ['required'],

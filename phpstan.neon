@@ -11,3 +11,11 @@ parameters:
         - routes/
 
     level: 7
+
+    ignoreErrors:
+        # DataAwareRule interface requires a $data property even when the
+        # concrete rule does not need it. Laravel uses this pattern widely.
+        -
+            identifier: property.onlyWritten
+            paths:
+                - app/Rules/SubmissionValuesForSpace.php
