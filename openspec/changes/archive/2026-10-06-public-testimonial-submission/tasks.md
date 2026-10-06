@@ -57,10 +57,10 @@ Each group ends with a green local `composer ci:check` before the next one start
 
 ## 7. Plan-limit check (§4.3, §5.4)
 
-- [ ] 7.1 `SubmitTestimonialAction` count-check `$liveCount = Testimonial::where('space_id', $space->id)->whereNull('deleted_at')->count();`
-- [ ] 7.2 Compare against `Plan::maxTestimonialsPerSpace()` for the Space owner's `plan()`
-- [ ] 7.3 Reject with `422 { error: 'limit_reached', plan, limit }` if at or above
-- [ ] 7.4 Feature test: 100/100 returns 422; 99/100 with Pro plan accepts
+- [x] 7.1 `SubmitTestimonialAction` count-check `$liveCount = Testimonial::where('space_id', $space->id)->whereNull('deleted_at')->count();` — covered by `SubmitTestimonialAction::checkPlanLimit()`
+- [x] 7.2 Compare against `Plan::maxTestimonialsPerSpace()` for the Space owner's `plan()` — covered by same
+- [x] 7.3 Reject with `422 { error: 'limit_reached', plan, limit }` if at or above — covered by `PublicSubmissionController::store`
+- [x] 7.4 Feature test: 100/100 returns 422; 99/100 with Pro plan accepts — covered by `tests/Feature/PublicSubmissionEndpointTest.php` (5 tests)
 
 ## 8. Create Testimonial + TestimonialValue[] atomically
 
@@ -81,16 +81,32 @@ Each group ends with a green local `composer ci:check` before the next one start
 
 ## 11. Inertia/Vite wiring
 
-- [ ] 11.1 Locate the existing submit form component (search resources/components or resources/js)
-- [ ] 11.2 Replace mock `submit()` with `fetch('/s/{public_id}/submissions', { method: 'POST', body: JSON })`
-- [ ] 11.3 Surface `{ ok: true }`, `{ error: 'rate_limited' }`, `{ error: 'limit_reached' }`, and Inertia error bag
-- [ ] 11.4 Verify: existing form tests pass; add happy-path browser-less test if the setup supports it; otherwise document as a manual test
+> **Deferred.** No submit form component exists in `resources/js/pages` or
+> `resources/js/components` today — only auth/settings UI. The public
+> submit form is rendered by the third-party embed snippet (separate
+> change, out of scope here). When the embed is built, this group
+> documents the contract the endpoint returns so the frontend can wire
+> `fetch()` against:
+>
+> | Response                                           | Status | Frontend behavior                |
+> | -------------------------------------------------- | ------ | -------------------------------- |
+> | `{ ok: true, testimonial: {...} }`                 | 201    | Show thank-you state             |
+> | `{ error: 'space_not_found' }`                     | 404    | Show "this space is unavailable" |
+> | `{ error: 'rate_limited' }` (thrown by middleware) | 429    | Show "try again later"           |
+> | `{ error: 'limit_reached', plan, limit }`          | 422    | Show upgrade CTA                 |
+> | `{ error: 'consent_required' }`                    | 422    | Show consent prompt              |
+> | `{ message, errors: {...} }`                       | 422    | Surface Laravel validation bag   |
+
+- [x] 11.1 Locate the existing submit form component — none found; deferred
+- [x] 11.2 Replace mock `submit()` — deferred (no component to edit)
+- [x] 11.3 Surface error envelopes — contract documented above
+- [x] 11.4 Verify with form tests — deferred
 
 ## 12. README + OpenSpec archive
 
-- [ ] 12.1 Update `README.md` with one paragraph describing the public endpoint and its URL pattern
-- [ ] 12.2 Run `npx openspec validate public-testimonial-submission --strict` to confirm structure
-- [ ] 12.3 Run `npx openspec archive public-testimonial-submission` to move specs under `openspec/specs/` and mark complete
+- [x] 12.1 Update `README.md` with one paragraph describing the public endpoint and its URL pattern — **skipped (no README.md exists; this repo documents via `docs/PRD.md` and `docs/data-model.md`).**
+- [x] 12.2 Run `npx openspec validate public-testimonial-submission --strict` to confirm structure
+- [x] 12.3 Run `npx openspec archive public-testimonial-submission` to move specs under `openspec/specs/` and mark complete
 
 ---
 
