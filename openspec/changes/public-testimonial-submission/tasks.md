@@ -26,8 +26,8 @@ Each group ends with a green local `composer ci:check` before the next one start
 
 ## 3. Custom rule: ReservedFieldKey
 
-- [ ] 3.1 `ReservedFieldKey` rejects `field_key` matching `^(name|email|testimonial|rating|consent_given|is_wall_of_love|is_hidden|is_favorite|public_id|slug)$` (case-insensitive)
-- [ ] 3.2 Unit test: 10+ reserved keys rejected, 5+ allowed keys accepted
+- [x] 3.1 `ReservedFieldKey` rejects `field_key` matching `^(name|email|testimonial|rating|consent_given|is_wall_of_love|is_hidden|is_favorite|public_id|slug)$` (case-insensitive)
+- [x] 3.2 Unit test: 10+ reserved keys rejected, 5+ allowed keys accepted
 
 ## 4. Custom rule: SubmissionValue (per space_fields.type)
 
