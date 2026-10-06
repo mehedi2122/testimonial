@@ -8,6 +8,7 @@ use App\Enums\Plan;
 use App\Models\Space;
 use App\Models\Testimonial;
 use App\Models\TestimonialValue;
+use App\Support\SanitizesFreeText;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -34,6 +35,8 @@ use Illuminate\Support\Facades\DB;
  */
 class SubmitTestimonialAction
 {
+    use SanitizesFreeText;
+
     /**
      * Run the preflight checks that must hold before a testimonial is created.
      *
@@ -126,22 +129,5 @@ class SubmitTestimonialAction
 
             return $testimonial;
         });
-    }
-
-    /**
-     * Strip HTML/script tags from free-text fields. Uses htmlspecialchars so
-     * the stored value still displays literally in the wall-of-love (not as
-     * raw entities) but cannot be interpreted as markup when rendered.
-     *
-     * Null/empty inputs are returned as-is so the calling site keeps the
-     * schema's NULL semantics where applicable.
-     */
-    private function sanitize(mixed $value): ?string
-    {
-        if ($value === null || $value === '') {
-            return is_string($value) ? $value : null;
-        }
-
-        return htmlspecialchars((string) $value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
     }
 }

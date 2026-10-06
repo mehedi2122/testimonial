@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Public\PublicSubmissionController;
 use App\Http\Controllers\Spaces\SpaceController;
+use App\Http\Controllers\Spaces\TestimonialController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -24,6 +25,21 @@ Route::middleware(['auth', 'verified'])->prefix('spaces')->name('spaces.')->grou
         ->name('embed');
     Route::get('/{space}/settings', [SpaceController::class, 'settings'])
         ->name('settings');
+
+    // Testimonial moderation (testimonial-inbox OpenSpec change). Each
+    // testimonial row's URL includes both the parent space slug and the
+    // testimonial id so the PK-scoping check inside the controller can
+    // catch cross-tenant guesses as 404 rather than 403.
+    Route::post('/{space}/inbox/{testimonial}/favorite', [TestimonialController::class, 'favorite'])
+        ->name('inbox.favorite');
+    Route::post('/{space}/inbox/{testimonial}/wall-of-love', [TestimonialController::class, 'wallOfLove'])
+        ->name('inbox.wall-of-love');
+    Route::post('/{space}/inbox/{testimonial}/hidden', [TestimonialController::class, 'hidden'])
+        ->name('inbox.hidden');
+    Route::patch('/{space}/inbox/{testimonial}', [TestimonialController::class, 'update'])
+        ->name('inbox.update');
+    Route::delete('/{space}/inbox/{testimonial}', [TestimonialController::class, 'destroy'])
+        ->name('inbox.destroy');
 });
 
 // Public testimonial submission endpoint (OpenSpec: public-testimonial-submission).

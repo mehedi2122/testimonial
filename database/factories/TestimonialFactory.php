@@ -43,4 +43,9 @@ class TestimonialFactory extends Factory
     {
         return $this->state(fn () => ['is_wall_of_love' => false]);
     }
+
+    public function favorite(): static
+    {
+        return $this->state(fn () => ['is_favorite' => true]);
+    }
 }
