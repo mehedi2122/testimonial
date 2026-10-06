@@ -8,9 +8,9 @@ Each group ends with a green local `composer ci:check` before the next one start
 
 ## 1. Route + Controller skeleton
 
-- [ ] 1.1 Add `POST /s/{public_id}/submissions` returning a placeholder `201` with the resolved Space's name
-- [ ] 1.2 Wire rate-limit middleware binding in `bootstrap/app.php` (named limiter `public-submissions:60/hour`)
-- [ ] 1.3 Pest test `it routes /s/{public_id}/submissions to PublicSubmissionController@store`
+- [x] 1.1 Add `POST /s/{public_id}/submissions` returning a placeholder `201` with the resolved Space's name
+- [x] 1.2 Wire rate-limit middleware binding in `bootstrap/app.php` (named limiter `public-submissions:60/hour`)
+- [x] 1.3 Pest test `it routes /s/{public_id}/submissions to PublicSubmissionController@store`
 
 ## 2. FormRequest with base validation
 

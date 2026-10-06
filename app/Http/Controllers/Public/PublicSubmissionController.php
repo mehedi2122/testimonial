@@ -4,34 +4,32 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Public;
 
-use App\Models\Space;
+use App\Http\Requests\SubmitTestimonialRequest;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 
 /**
- * Skeleton for the public testimonial submission endpoint
- * (OpenSpec change: public-testimonial-submission, group 1).
+ * Public testimonial submission endpoint (OpenSpec change: public-testimonial-submission).
  *
- * This class only handles routing + placeholder response. Group 2 will
- * add the FormRequest, group 6 the SoftDeletes preflight, group 7 the
- * plan-limit check, and group 8 the atomic create.
+ * Group 1: route + skeleton returning the resolved Space's name as a 201.
+ * Group 2: FormRequest validates the body; on success the controller still returns 201
+ *          with the resolved Space but does not create any rows (group 8 will).
+ * Subsequent groups add SoftDeletes preflight, plan-limit check, atomic create,
+ * consent_required preflight, sanitization, and the frontend wiring.
  */
 class PublicSubmissionController extends Controller
 {
     /**
-     * Placeholder response for /s/{public_id}/submissions.
-     *
-     * Returns 201 with the Space name so the route is verifiable end-to-end
-     * without the full validation/persistence pipeline yet.
+     * Validate the submission body. The FormRequest also resolves the Space and applies
+     * the SoftDeletes preflight (group 6), so by the time we reach this method the Space
+     * is guaranteed to exist and not be soft-deleted.
      */
-    public function store(string $publicId): JsonResponse
+    public function store(SubmitTestimonialRequest $request): JsonResponse
     {
-        $space = Space::query()
-            ->where('public_id', $publicId)
-            ->whereNull('deleted_at')
-            ->first();
-
-        if (! $space) {
+        try {
+            $space = $request->space();
+        } catch (ModelNotFoundException) {
             return response()->json([
                 'error' => 'space_not_found',
             ], 404);

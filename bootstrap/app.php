@@ -22,6 +22,15 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
+
+        // The public submission endpoint is reached from a third-party
+        // website's DOM via fetch() — there is no same-origin guarantee and
+        // therefore no CSRF cookie to validate. CSRF protection for the
+        // endpoint comes from the rate limiter (60/IP/hour) and from server
+        // owning consent validation, not from a Laravel CSRF cookie.
+        $middleware->validateCsrfTokens(except: [
+            's/*/submissions',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
