@@ -3,8 +3,11 @@
 namespace App\Providers;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -24,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configureRateLimiters();
     }
 
     /**
@@ -46,5 +50,20 @@ class AppServiceProvider extends ServiceProvider
                 ->uncompromised()
             : null,
         );
+    }
+
+    /**
+     * Configure named rate limiters.
+     *
+     * `public-submissions`: 60 requests per IP per hour. Exceeding returns
+     * 429 with the JSON body { error: 'rate_limited' } once group 11 wires
+     * the error envelope. Defined here (not in bootstrap/app.php) because
+     * the RateLimiter facade is not available during middleware binding.
+     */
+    protected function configureRateLimiters(): void
+    {
+        RateLimiter::for('public-submissions', function (Request $request) {
+            return Limit::perHour(60)->by($request->ip());
+        });
     }
 }
