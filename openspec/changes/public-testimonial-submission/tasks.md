@@ -16,13 +16,13 @@ Each group ends with a green local `composer ci:check` before the next one start
 
 `SubmitTestimonialRequest` rules:
 
-- [ ] 2.1 `name` required string 2..120
-- [ ] 2.2 `email` required email:rfc 5324
-- [ ] 2.3 `testimonial` required string 10..2000
-- [ ] 2.4 `rating` required integer min:1 max:5 (only if `rating_enabled`)
-- [ ] 2.5 `consent_given` required boolean (must be true to accept — PRD §13 social-sharing consent)
-- [ ] 2.6 `values` array; each entry `field_key` + `value`
-- [ ] 2.7 Feature test rejects each rule by return count, accepts a minimal valid payload
+- [x] 2.1 `name` required string 2..120
+- [x] 2.2 `email` required email:rfc 5324
+- [x] 2.3 `testimonial` required string 10..2000
+- [x] 2.4 `rating` required integer min:1 max:5 (only if `rating_enabled`)
+- [x] 2.5 `consent_given` required boolean (must be true to accept — PRD §13 social-sharing consent)
+- [x] 2.6 `values` array; each entry `field_key` + `value`
+- [x] 2.7 Feature test rejects each rule by return count, accepts a minimal valid payload
 
 ## 3. Custom rule: ReservedFieldKey
 
