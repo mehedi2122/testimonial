@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Enums\Plan;
 use App\Models\Space as SpaceModel;
+use App\Models\Testimonial;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -180,6 +183,109 @@ it('rejects reserved field keys case-insensitively', function (): void {
 
     $response->assertStatus(422);
     $response->assertJsonValidationErrors(['values.0.field_key']);
+});
+
+// Group 7: plan-limit check.
+
+it('rejects with 422 limit_reached when a Free-plan Space is at 100/100', function (): void {
+    $owner = User::factory()->create();
+    $space = SpaceModel::factory()->for($owner)->create();
+
+    Testimonial::factory()
+        ->count(Plan::Free->maxTestimonialsPerSpace())
+        ->for($space)
+        ->create();
+
+    $response = $this->postJson("/s/{$space->public_id}/submissions", validPayload());
+
+    $response->assertStatus(422);
+    $response->assertExactJson([
+        'error' => 'limit_reached',
+        'plan' => Plan::Free->value,
+        'limit' => Plan::Free->maxTestimonialsPerSpace(),
+    ]);
+});
+
+it('rejects with 422 limit_reached when a Free-plan Space is over the cap', function (): void {
+    $owner = User::factory()->create();
+    $space = SpaceModel::factory()->for($owner)->create();
+
+    Testimonial::factory()
+        ->count(Plan::Free->maxTestimonialsPerSpace() + 5)
+        ->for($space)
+        ->create();
+
+    $response = $this->postJson("/s/{$space->public_id}/submissions", validPayload());
+
+    $response->assertStatus(422);
+    $response->assertJson(['error' => 'limit_reached']);
+});
+
+it('counts only live testimonials toward the limit (soft-deleted are excluded)', function (): void {
+    $owner = User::factory()->create();
+    $space = SpaceModel::factory()->for($owner)->create();
+
+    // 99 live + 5 soft-deleted = still under the 100 cap.
+    Testimonial::factory()
+        ->count(99)
+        ->for($space)
+        ->create();
+    Testimonial::factory()
+        ->count(5)
+        ->for($space)
+        ->create()
+        ->each(fn (Testimonial $t) => $t->delete());
+
+    $response = $this->postJson("/s/{$space->public_id}/submissions", validPayload());
+
+    $response->assertStatus(201);
+});
+
+it('accepts a Pro-plan Space at 99/1000 with 1 spot left', function (): void {
+    $owner = User::factory()->create();
+    $owner->subscriptions()->create([
+        'type' => 'default',
+        'stripe_id' => 'sub_test',
+        'stripe_status' => 'active',
+        'stripe_price' => 'price_test_pro',
+        'quantity' => 1,
+    ]);
+    $space = SpaceModel::factory()->for($owner)->create();
+
+    Testimonial::factory()
+        ->count(Plan::Pro->maxTestimonialsPerSpace() - 1)
+        ->for($space)
+        ->create();
+
+    $response = $this->postJson("/s/{$space->public_id}/submissions", validPayload());
+
+    $response->assertStatus(201);
+});
+
+it('rejects a Pro-plan Space at 1000/1000', function (): void {
+    $owner = User::factory()->create();
+    $owner->subscriptions()->create([
+        'type' => 'default',
+        'stripe_id' => 'sub_test',
+        'stripe_status' => 'active',
+        'stripe_price' => 'price_test_pro',
+        'quantity' => 1,
+    ]);
+    $space = SpaceModel::factory()->for($owner)->create();
+
+    Testimonial::factory()
+        ->count(Plan::Pro->maxTestimonialsPerSpace())
+        ->for($space)
+        ->create();
+
+    $response = $this->postJson("/s/{$space->public_id}/submissions", validPayload());
+
+    $response->assertStatus(422);
+    $response->assertExactJson([
+        'error' => 'limit_reached',
+        'plan' => Plan::Pro->value,
+        'limit' => Plan::Pro->maxTestimonialsPerSpace(),
+    ]);
 });
 
 // ---------------------------------------------------------------------------

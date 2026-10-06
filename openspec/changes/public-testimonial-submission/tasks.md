@@ -51,9 +51,9 @@ Each group ends with a green local `composer ci:check` before the next one start
 
 ## 6. Space resolution and SoftDeletes preflight
 
-- [ ] 6.1 Controller: load Space by `public_id` with `->whereNull('deleted_at')`
-- [ ] 6.2 If not found, return `404 { error: 'space_not_found' }`
-- [ ] 6.3 Feature test: deleted Space yields 404; live Space yields 200
+- [x] 6.1 Controller: load Space by `public_id` with `->whereNull('deleted_at')` — covered by `SubmitTestimonialRequest::space()` (called from `PublicSubmissionController::store`)
+- [x] 6.2 If not found, return `404 { error: 'space_not_found' }` — covered by `try/catch (ModelNotFoundException)` in `PublicSubmissionController::store`
+- [x] 6.3 Feature test: deleted Space yields 404; live Space yields 200 — covered by `tests/Feature/PublicSubmissionEndpointTest.php` (3 tests)
 
 ## 7. Plan-limit check (§4.3, §5.4)
 
