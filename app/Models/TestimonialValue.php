@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\TestimonialValueFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,7 +21,7 @@ use Illuminate\Support\Carbon;
  */
 class TestimonialValue extends Model
 {
-    /** @use HasFactory<\Database\Factories\TestimonialValueFactory> */
+    /** @use HasFactory<TestimonialValueFactory> */
     use HasFactory;
 
     protected $fillable = [

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\SpaceFieldMode;
 use App\Enums\SpaceFieldType;
+use Database\Factories\SpaceFieldFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -32,7 +33,7 @@ use Illuminate\Support\Carbon;
  */
 class SpaceField extends Model
 {
-    /** @use HasFactory<\Database\Factories\SpaceFieldFactory> */
+    /** @use HasFactory<SpaceFieldFactory> */
     use HasFactory, SoftDeletes;
 
     protected $fillable = [

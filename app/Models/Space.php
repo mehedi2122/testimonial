@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\SpaceFieldMode;
 use App\Enums\SpaceTheme;
+use Database\Factories\SpaceFactory;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,15 +29,14 @@ use Illuminate\Support\Str;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
- *
  * @property-read User $user
- * @property-read \Illuminate\Database\Eloquent\Collection<int, SpaceField> $fields
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Testimonial> $testimonials
+ * @property-read Collection<int, SpaceField> $fields
+ * @property-read Collection<int, Testimonial> $testimonials
  * @property-read EmbedConfiguration|null $embedConfiguration
  */
 class Space extends Model
 {
-    /** @use HasFactory<\Database\Factories\SpaceFactory> */
+    /** @use HasFactory<SpaceFactory> */
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
@@ -72,7 +74,7 @@ class Space extends Model
                     'label' => $row['label'],
                     'type' => $row['type'],
                     'sort_order' => $row['sort_order'],
-                    'mode' => \App\Enums\SpaceFieldMode::Off,
+                    'mode' => SpaceFieldMode::Off,
                 ]);
             }
         });

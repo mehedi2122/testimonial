@@ -9,6 +9,7 @@ use App\Models\SpaceField;
 use App\Models\Testimonial;
 use App\Models\TestimonialValue;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -17,7 +18,6 @@ uses(RefreshDatabase::class);
  * Tests pinning the data-model.md schema contract. If any of these start failing,
  * the contract has drifted — fix the schema, not the test.
  */
-
 it('exposes the visibility rule through scopePubliclyVisible', function (): void {
     $space = Space::factory()->create();
 
@@ -68,7 +68,7 @@ it('keeps slug globally unique at the database level', function (): void {
     Space::factory()->create(['slug' => 'taken']);
 
     Space::factory()->create(['slug' => 'taken']);
-})->throws(Illuminate\Database\QueryException::class);
+})->throws(QueryException::class);
 
 it('retains the slug when a Space is soft-deleted', function (): void {
     $space = Space::factory()->create(['slug' => 'reserved']);
@@ -98,7 +98,7 @@ it('enforces unique field_key within a space', function (): void {
     SpaceField::factory()->for($space)->create(['field_key' => 'job_title']);
 
     SpaceField::factory()->for($space)->create(['field_key' => 'job_title']);
-})->throws(Illuminate\Database\QueryException::class);
+})->throws(QueryException::class);
 
 it('never holds an email address in testimonial_values', function (): void {
     $space = Space::factory()->create();
@@ -240,7 +240,7 @@ it('keeps testimonial_values.space_field_id on restrict so soft-deleted fields s
     $threw = false;
     try {
         $field->forceDelete();
-    } catch (Illuminate\Database\QueryException) {
+    } catch (QueryException) {
         $threw = true;
     }
     expect($threw)->toBeTrue('forceDelete must throw QueryException');
