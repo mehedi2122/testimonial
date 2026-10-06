@@ -3,10 +3,12 @@
 namespace App\Providers;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -28,6 +30,31 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureRateLimiters();
+        $this->configureLocalAutoVerify();
+    }
+
+    /**
+     * In local environments, auto-mark newly registered users as email-verified
+     * so the /spaces/* verified-middleware gate does not block local sign-up →
+     * log-in → dashboard testing. Production and other non-local environments
+     * are unaffected and continue to require the user to click the
+     * verification link.
+     */
+    protected function configureLocalAutoVerify(): void
+    {
+        if (! app()->environment('local')) {
+            return;
+        }
+
+        Event::listen(Registered::class, function (Registered $event): void {
+            $user = $event->user;
+
+            if (method_exists($user, 'hasVerifiedEmail') && $user->hasVerifiedEmail()) {
+                return;
+            }
+
+            $user->forceFill(['email_verified_at' => now()])->save();
+        });
     }
 
     /**
