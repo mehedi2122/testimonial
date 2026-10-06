@@ -53,6 +53,9 @@ class EmbedConfiguration extends Model
         'show_rating' => 'boolean',
     ];
 
+    /**
+     * @return BelongsTo<Space, $this>
+     */
     public function space(): BelongsTo
     {
         return $this->belongsTo(Space::class);

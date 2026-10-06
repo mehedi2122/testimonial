@@ -30,11 +30,17 @@ class TestimonialValue extends Model
         'value',
     ];
 
+    /**
+     * @return BelongsTo<Testimonial, $this>
+     */
     public function testimonial(): BelongsTo
     {
         return $this->belongsTo(Testimonial::class);
     }
 
+    /**
+     * @return BelongsTo<SpaceField, $this>
+     */
     public function spaceField(): BelongsTo
     {
         return $this->belongsTo(SpaceField::class);

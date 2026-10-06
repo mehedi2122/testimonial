@@ -17,7 +17,8 @@ class SpaceFactory extends Factory
 
     public function definition(): array
     {
-        $name = fake()->unique()->words(3, true);
+        $words = fake()->unique()->words(3);
+        $name = is_array($words) ? implode(' ', $words) : $words;
 
         return [
             'user_id' => User::factory(),

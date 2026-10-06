@@ -220,6 +220,7 @@ class ReferenceScenarioSeeder extends Seeder
 
         $fields = $space->fields()->get()->keyBy('field_key');
 
+        /** @var array<string, SpaceField> $fields */
         $testimonial->values()->createMany([
             ['space_field_id' => $fields['company_name']->id, 'value' => 'Nimbus Dev'],
             ['space_field_id' => $fields['social_url']->id, 'value' => 'https://nimbus.dev/priya'],

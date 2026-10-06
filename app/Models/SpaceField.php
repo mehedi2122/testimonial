@@ -60,11 +60,17 @@ class SpaceField extends Model
         ['field_key' => 'profile_photo', 'label' => 'Profile photo', 'type' => SpaceFieldType::Image, 'sort_order' => 30],
     ];
 
+    /**
+     * @return BelongsTo<Space, $this>
+     */
     public function space(): BelongsTo
     {
         return $this->belongsTo(Space::class);
     }
 
+    /**
+     * @return HasMany<TestimonialValue, $this>
+     */
     public function values(): HasMany
     {
         return $this->hasMany(TestimonialValue::class);

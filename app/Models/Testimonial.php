@@ -65,11 +65,17 @@ class Testimonial extends Model
         'submitted_at' => 'datetime',
     ];
 
+    /**
+     * @return BelongsTo<Space, $this>
+     */
     public function space(): BelongsTo
     {
         return $this->belongsTo(Space::class);
     }
 
+    /**
+     * @return HasMany<TestimonialValue, $this>
+     */
     public function values(): HasMany
     {
         return $this->hasMany(TestimonialValue::class);
@@ -85,6 +91,9 @@ class Testimonial extends Model
      * the STORED expression were ever bypassed (e.g., row-level writes that
      * touch the underlying flags without our saving hook, like raw soft-delete
      * statements), this scope still returns the truth.
+     *
+     * @param  Builder<Testimonial>  $query
+     * @return Builder<Testimonial>
      */
     public function scopePubliclyVisible(Builder $query): Builder
     {
@@ -99,6 +108,9 @@ class Testimonial extends Model
 
     /**
      * Live aggregates (limit counts, dashboard). Excludes soft-deleted.
+     *
+     * @param  Builder<Testimonial>  $query
+     * @return Builder<Testimonial>
      */
     public function scopeLive(Builder $query): Builder
     {

@@ -91,21 +91,33 @@ class Space extends Model
         return Str::lower(Str::random(12));
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return HasMany<SpaceField, $this>
+     */
     public function fields(): HasMany
     {
         return $this->hasMany(SpaceField::class);
     }
 
+    /**
+     * @return HasMany<Testimonial, $this>
+     */
     public function testimonials(): HasMany
     {
         return $this->hasMany(Testimonial::class);
     }
 
+    /**
+     * @return HasOne<EmbedConfiguration, $this>
+     */
     public function embedConfiguration(): HasOne
     {
         return $this->hasOne(EmbedConfiguration::class);

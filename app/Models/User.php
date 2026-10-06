@@ -56,6 +56,9 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         ];
     }
 
+    /**
+     * @return HasMany<Space, $this>
+     */
     public function spaces(): HasMany
     {
         return $this->hasMany(Space::class);
