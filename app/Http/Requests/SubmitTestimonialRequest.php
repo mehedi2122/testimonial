@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Models\Space;
+use App\Rules\ReservedFieldKey;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -63,7 +64,7 @@ class SubmitTestimonialRequest extends FormRequest
             'consent_given' => ['required', 'boolean', Rule::in([true])],
             'values' => ['sometimes', 'array'],
             'values.*' => ['array:field_key,value'],
-            'values.*.field_key' => ['required', 'string', 'max:64'],
+            'values.*.field_key' => ['required', 'string', 'max:64', new ReservedFieldKey],
             'values.*.value' => ['required'],
         ];
     }

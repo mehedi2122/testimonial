@@ -154,6 +154,34 @@ it('rejects values entries missing field_key', function (): void {
     $response->assertJsonValidationErrors(['values.0.field_key']);
 });
 
+it('rejects values entries with reserved field keys', function (): void {
+    $space = SpaceModel::factory()->create();
+
+    $payload = validPayload();
+    $payload['values'] = [
+        ['field_key' => 'email', 'value' => 'someone@example.com'],
+    ];
+
+    $response = $this->postJson("/s/{$space->public_id}/submissions", $payload);
+
+    $response->assertStatus(422);
+    $response->assertJsonValidationErrors(['values.0.field_key']);
+});
+
+it('rejects reserved field keys case-insensitively', function (): void {
+    $space = SpaceModel::factory()->create();
+
+    $payload = validPayload();
+    $payload['values'] = [
+        ['field_key' => 'NAME', 'value' => 'whatever'],
+    ];
+
+    $response = $this->postJson("/s/{$space->public_id}/submissions", $payload);
+
+    $response->assertStatus(422);
+    $response->assertJsonValidationErrors(['values.0.field_key']);
+});
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
