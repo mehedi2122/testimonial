@@ -76,8 +76,8 @@ Each group ends with a green local `composer ci:check` before the next one start
 
 ## 10. Sanitization on write (§6)
 
-- [ ] 10.1 Apply `htmlspecialchars($value, ENT_QUOTES | ENT_HTML5, 'UTF-8')` to `name`, `testimonial`, and each `TestimonialValue->value`
-- [ ] 10.2 Unit test: script tags stripped from name and from each value
+- [x] 10.1 Apply `htmlspecialchars($value, ENT_QUOTES | ENT_HTML5, 'UTF-8')` to `name`, `testimonial`, and each `TestimonialValue->value` — folded into `SubmitTestimonialAction::create()` (group 8). Email is intentionally NOT sanitized (structural column, never rendered).
+- [x] 10.2 Unit test: script tags stripped from name and from each value — covered by `tests/Unit/Actions/SubmitTestimonialActionTest.php` (4 tests: name, testimonial, value, email-not-escaped)
 
 ## 11. Inertia/Vite wiring
 
