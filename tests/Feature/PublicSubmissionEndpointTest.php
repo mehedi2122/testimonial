@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\Plan;
 use App\Models\Space as SpaceModel;
 use App\Models\Testimonial;
+use App\Models\TestimonialValue;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -18,13 +19,7 @@ it('routes /s/{public_id}/submissions to the public submission controller', func
     $response = $this->postJson("/s/{$space->public_id}/submissions", validPayload());
 
     $response->assertStatus(201);
-    $response->assertJson([
-        'ok' => true,
-        'space' => [
-            'id' => $space->id,
-            'name' => $space->name,
-        ],
-    ]);
+    $response->assertJsonStructure(['ok', 'testimonial' => ['id', 'submitted_at']]);
 });
 
 it('returns 404 space_not_found for an unknown public_id', function (): void {
@@ -286,6 +281,70 @@ it('rejects a Pro-plan Space at 1000/1000', function (): void {
         'plan' => Plan::Pro->value,
         'limit' => Plan::Pro->maxTestimonialsPerSpace(),
     ]);
+});
+
+// Group 8: atomic Testimonial + TestimonialValue[] create.
+
+it('persists a Testimonial row on success', function (): void {
+    $space = SpaceModel::factory()->create();
+
+    $this->postJson("/s/{$space->public_id}/submissions", validPayload())->assertStatus(201);
+
+    expect(Testimonial::query()->where('space_id', $space->id)->count())->toBe(1);
+});
+
+it('persists one TestimonialValue row per values entry', function (): void {
+    $space = SpaceModel::factory()->create();
+
+    $payload = validPayload();
+    $payload['values'] = [
+        ['field_key' => 'company_name', 'value' => 'Acme Corp'],
+        ['field_key' => 'social_url', 'value' => 'https://example.com'],
+    ];
+
+    $this->postJson("/s/{$space->public_id}/submissions", $payload)->assertStatus(201);
+
+    $testimonial = Testimonial::query()->where('space_id', $space->id)->firstOrFail();
+    expect($testimonial->values()->count())->toBe(2);
+    expect(TestimonialValue::query()->where('testimonial_id', $testimonial->id)->count())->toBe(2);
+});
+
+it('rolls back when a TestimonialValue insert fails mid-transaction', function (): void {
+    $space = SpaceModel::factory()->create();
+
+    // Force the second insert (TestimonialValue) to throw. The transaction
+    // wrapping the create() call must roll back the Testimonial row too.
+    TestimonialValue::creating(function (TestimonialValue $v): void {
+        throw new RuntimeException('simulated mid-transaction failure');
+    });
+
+    $payload = validPayload();
+    $payload['values'] = [
+        ['field_key' => 'company_name', 'value' => 'Acme Corp'],
+    ];
+
+    $response = $this->postJson("/s/{$space->public_id}/submissions", $payload);
+
+    // The exception bubbles to the framework as 500 — what matters is
+    // that no row survived.
+    expect($response->status())->toBeIn([500, 503]);
+    expect(Testimonial::query()->where('space_id', $space->id)->count())->toBe(0);
+    expect(TestimonialValue::query()->count())->toBe(0);
+});
+
+it('commits Testimonial + TestimonialValue[] together on success', function (): void {
+    $space = SpaceModel::factory()->create();
+
+    $payload = validPayload();
+    $payload['values'] = [
+        ['field_key' => 'company_name', 'value' => 'Acme Corp'],
+    ];
+
+    $this->postJson("/s/{$space->public_id}/submissions", $payload)->assertStatus(201);
+
+    $testimonial = Testimonial::query()->where('space_id', $space->id)->firstOrFail();
+    expect($testimonial->values()->count())->toBe(1);
+    expect($testimonial->values()->first()->value)->toBe('Acme Corp');
 });
 
 // ---------------------------------------------------------------------------

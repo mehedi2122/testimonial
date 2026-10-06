@@ -64,9 +64,9 @@ Each group ends with a green local `composer ci:check` before the next one start
 
 ## 8. Create Testimonial + TestimonialValue[] atomically
 
-- [ ] 8.1 DB transaction wraps: Testimonial create + TestimonialValue foreach
-- [ ] 8.2 Use `connection()->transaction()` (no Space-row lock; rejected per §5.4)
-- [ ] 8.3 Feature test: rolls back on a mid-transaction failure; commits on success
+- [x] 8.1 DB transaction wraps: Testimonial create + TestimonialValue foreach — covered by `SubmitTestimonialAction::create()` via `DB::connection()->transaction()`
+- [x] 8.2 Use `connection()->transaction()` (no Space-row lock; rejected per §5.4) — covered by same
+- [x] 8.3 Feature test: rolls back on a mid-transaction failure; commits on success — covered by `tests/Feature/PublicSubmissionEndpointTest.php` (3 group-8 tests)
 
 ## 9. is_wall_of_love preflight (§15)
 

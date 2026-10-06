@@ -17,8 +17,10 @@ use Illuminate\Routing\Controller;
  * Group 2: FormRequest validates the body.
  * Group 6: SoftDeletes preflight (delegated to SubmitTestimonialRequest::space()).
  * Group 7: plan-limit check via SubmitTestimonialAction::checkPlanLimit().
- * Group 8 (next) will fold the atomic Testimonial + TestimonialValue[] create into
- *           the same action.
+ * Group 8: atomic Testimonial + TestimonialValue[] create via
+ *          SubmitTestimonialAction::create().
+ * Group 9 (next) will add the is_wall_of_love + consent preflight before
+ *           the create call.
  */
 class PublicSubmissionController extends Controller
 {
@@ -49,11 +51,13 @@ class PublicSubmissionController extends Controller
             ], 422);
         }
 
+        $testimonial = $this->action->create($space, $request->validated());
+
         return response()->json([
             'ok' => true,
-            'space' => [
-                'id' => $space->id,
-                'name' => $space->name,
+            'testimonial' => [
+                'id' => $testimonial->id,
+                'submitted_at' => $testimonial->submitted_at->toIso8601String(),
             ],
         ], 201);
     }
