@@ -33,4 +33,10 @@ Route::post('s/{public_id}/submissions', [PublicSubmissionController::class, 'st
     ->middleware('throttle:public-submissions')
     ->name('public.submissions.store');
 
+// Public submission form page (OpenSpec: public-submission-form).
+// Auth-free, unthrottled GET — the page itself is read-only and serves
+// only as the form respondents fill out before hitting the POST above.
+Route::get('s/{public_id}', [PublicSubmissionController::class, 'show'])
+    ->name('public.submissions.show');
+
 require __DIR__.'/settings.php';

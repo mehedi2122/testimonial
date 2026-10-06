@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Public;
 
+use App\Actions\Public\ShowPublicSubmissionAction;
 use App\Actions\SubmitTestimonialAction;
+use App\Enums\SpaceFieldMode;
 use App\Http\Requests\SubmitTestimonialRequest;
+use App\Models\SpaceField;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
+use Inertia\Inertia;
+use Inertia\Response;
 
 /**
  * Public testimonial submission endpoint (OpenSpec change: public-testimonial-submission).
@@ -21,10 +26,52 @@ use Illuminate\Routing\Controller;
  *          SubmitTestimonialAction::create().
  * Group 9 (next) will add the is_wall_of_love + consent preflight before
  *           the create call.
+ *
+ * public-submission-form (later change): added `show()` for the GET
+ * `/{public_id}` page the form lives on.
  */
 class PublicSubmissionController extends Controller
 {
     public function __construct(private readonly SubmitTestimonialAction $action) {}
+
+    /**
+     * Render the public submission form (OpenSpec: public-submission-form).
+     *
+     * Public, unthrottled, no auth. Soft-deleted or unknown public_ids
+     * `abort(404)` — same preflight rule as the POST endpoint.
+     */
+    public function show(
+        string $publicId,
+        ShowPublicSubmissionAction $showAction,
+    ): Response {
+        try {
+            $space = $showAction->resolve($publicId);
+        } catch (ModelNotFoundException) {
+            abort(404);
+        }
+
+        return Inertia::render('public/submit', [
+            'space' => [
+                'public_id' => $space->public_id,
+                'name' => $space->name,
+                'title' => $space->title,
+                'subtitle' => $space->subtitle,
+                'ask' => $space->ask,
+                'theme' => $space->theme->value,
+                'rating_enabled' => $space->rating_enabled,
+            ],
+            'fields' => $space->fields
+                ->map(fn (SpaceField $field): array => [
+                    'field_key' => $field->field_key,
+                    'label' => $field->label,
+                    'type' => $field->type->value,
+                    'mode' => $field->mode->value,
+                    'required' => $field->mode === SpaceFieldMode::Required,
+                ])
+                ->values()
+                ->all(),
+        ]);
+    }
 
     /**
      * Validate the submission body. The FormRequest also resolves the Space and applies
