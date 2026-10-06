@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Actions\SubmitTestimonialAction;
 use App\Enums\Plan;
 use App\Models\Space as SpaceModel;
 use App\Models\Testimonial;
@@ -345,6 +346,45 @@ it('commits Testimonial + TestimonialValue[] together on success', function (): 
     $testimonial = Testimonial::query()->where('space_id', $space->id)->firstOrFail();
     expect($testimonial->values()->count())->toBe(1);
     expect($testimonial->values()->first()->value)->toBe('Acme Corp');
+});
+
+// Group 9: is_wall_of_love + consent gate.
+
+it('persists is_wall_of_love when consent_given is true', function (): void {
+    $space = SpaceModel::factory()->create();
+
+    $payload = validPayload();
+    $payload['is_wall_of_love'] = true;
+
+    $this->postJson("/s/{$space->public_id}/submissions", $payload)->assertStatus(201);
+
+    $testimonial = Testimonial::query()->where('space_id', $space->id)->firstOrFail();
+    expect($testimonial->is_wall_of_love)->toBeTrue();
+    expect($testimonial->consent_given)->toBeTrue();
+});
+
+it('defaults is_wall_of_love to false when not supplied', function (): void {
+    $space = SpaceModel::factory()->create();
+
+    $this->postJson("/s/{$space->public_id}/submissions", validPayload())->assertStatus(201);
+
+    $testimonial = Testimonial::query()->where('space_id', $space->id)->firstOrFail();
+    expect($testimonial->is_wall_of_love)->toBeFalse();
+});
+
+it('rejects is_wall_of_love=true with consent_given=false at the action gate', function (): void {
+    // The FormRequest forces consent_given=true at the validation layer, so
+    // this path is unreachable via HTTP today. We exercise the action's
+    // gate directly to prove the cross-field rule still holds if the
+    // consent rule is ever relaxed.
+    $action = new SubmitTestimonialAction;
+
+    $result = $action->checkConsentForWallOfLove([
+        'is_wall_of_love' => true,
+        'consent_given' => false,
+    ]);
+
+    expect($result)->toBe(['error' => 'consent_required']);
 });
 
 // ---------------------------------------------------------------------------

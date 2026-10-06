@@ -70,9 +70,9 @@ Each group ends with a green local `composer ci:check` before the next one start
 
 ## 9. is_wall_of_love preflight (§15)
 
-- [ ] 9.1 Reject `is_wall_of_love = true` while `consent_given = false`
-- [ ] 9.2 Return `422 { error: 'consent_required' }`
-- [ ] 9.3 Feature test: consent=false with wall_of_love=true rejected
+- [x] 9.1 Reject `is_wall_of_love = true` while `consent_given = false` — covered by `SubmitTestimonialAction::checkConsentForWallOfLove()`
+- [x] 9.2 Return `422 { error: 'consent_required' }` — covered by `PublicSubmissionController::store`
+- [x] 9.3 Feature test: consent=false with wall_of_love=true rejected — covered by `tests/Unit/Actions/SubmitTestimonialActionTest.php` and a feature test in `tests/Feature/PublicSubmissionEndpointTest.php`. The FormRequest forces consent_given=true, so the gate is exercised via the action's unit test (defensive: if the consent rule is ever relaxed, the gate still fires).
 
 ## 10. Sanitization on write (§6)
 

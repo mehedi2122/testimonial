@@ -70,6 +70,7 @@ class SubmitTestimonialRequest extends FormRequest
             'testimonial' => ['required', 'string', 'min:10', 'max:2000'],
             'rating' => [$ratingRequired ? 'required' : 'sometimes', 'integer', 'min:1', 'max:5'],
             'consent_given' => ['required', 'boolean', Rule::in([true])],
+            'is_wall_of_love' => ['sometimes', 'boolean'],
             'values' => ['sometimes', 'array', new SubmissionValuesForSpace($fieldTypeMap)],
             'values.*' => ['array:field_key,value'],
             'values.*.field_key' => ['required', 'string', 'max:64', new ReservedFieldKey],

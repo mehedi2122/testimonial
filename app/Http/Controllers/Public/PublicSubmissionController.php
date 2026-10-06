@@ -41,6 +41,19 @@ class PublicSubmissionController extends Controller
             ], 404);
         }
 
+        $payload = $request->validated();
+
+        // Group 9: §15 wall-of-love consent gate. Today the FormRequest
+        // already forces consent_given=true, so this is defensive — if
+        // the consent rule is ever relaxed, this prevents the bypass.
+        $consentFailure = $this->action->checkConsentForWallOfLove($payload);
+
+        if ($consentFailure !== null) {
+            return response()->json([
+                'error' => $consentFailure['error'],
+            ], 422);
+        }
+
         $limitFailure = $this->action->checkPlanLimit($space);
 
         if ($limitFailure !== null) {
@@ -51,7 +64,7 @@ class PublicSubmissionController extends Controller
             ], 422);
         }
 
-        $testimonial = $this->action->create($space, $request->validated());
+        $testimonial = $this->action->create($space, $payload);
 
         return response()->json([
             'ok' => true,

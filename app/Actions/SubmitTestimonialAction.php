@@ -23,6 +23,12 @@ use Illuminate\Support\Facades\DB;
  * shared lock — concurrent submits past the cap are caught by the count
  * check on the next request, and the row insert itself is atomic.
  *
+ * Group 9: §15 cross-field gate. If a submitter asks to be on the wall
+ * (is_wall_of_love=true) but refuses consent (consent_given=false), we
+ * reject with `consent_required`. Today the FormRequest forces
+ * consent_given=true, so the gate is defensive; if the consent rule is
+ * ever relaxed, this gate prevents the bypass.
+ *
  * Sanitization (group 10) is folded in here: name, testimonial, and
  * each value are run through htmlspecialchars() before write.
  */
@@ -55,6 +61,24 @@ class SubmitTestimonialAction
     }
 
     /**
+     * Group 9: §15 wall-of-love consent gate.
+     *
+     * @param  array<string, mixed>  $payload  validated submission body
+     * @return array{error: string}|null
+     */
+    public function checkConsentForWallOfLove(array $payload): ?array
+    {
+        $wantsWall = (bool) ($payload['is_wall_of_love'] ?? false);
+        $consented = (bool) ($payload['consent_given'] ?? false);
+
+        if ($wantsWall && ! $consented) {
+            return ['error' => 'consent_required'];
+        }
+
+        return null;
+    }
+
+    /**
      * Atomically create a Testimonial row and one TestimonialValue row per
      * `values` entry. Returns the persisted Testimonial.
      *
@@ -74,7 +98,7 @@ class SubmitTestimonialAction
                 'testimonial' => $this->sanitize($payload['testimonial'] ?? ''),
                 'rating' => $payload['rating'] ?? null,
                 'consent_given' => (bool) ($payload['consent_given'] ?? false),
-                'is_wall_of_love' => false, // group 9 will gate this on consent
+                'is_wall_of_love' => (bool) ($payload['is_wall_of_love'] ?? false),
                 'submitted_at' => now(),
             ]);
 
