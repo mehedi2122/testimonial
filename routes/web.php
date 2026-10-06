@@ -9,6 +9,13 @@ Route::inertia('/', 'welcome')->name('home');
 Route::middleware(['auth', 'verified'])->prefix('spaces')->name('spaces.')->group(function () {
     Route::get('/', [SpaceController::class, 'index'])->name('index');
 
+    // Space CRUD (space-crud OpenSpec change). Static /create + POST / must
+    // precede {space}-bound routes so the placeholder segment isn't
+    // captured by route model binding.
+    Route::get('/create', [SpaceController::class, 'create'])->name('create');
+    Route::post('/', [SpaceController::class, 'store'])->name('store');
+    Route::delete('/{space}', [SpaceController::class, 'destroy'])->name('destroy');
+
     Route::get('/{space}/dashboard', [SpaceController::class, 'dashboard'])
         ->name('dashboard');
     Route::get('/{space}/inbox', [SpaceController::class, 'inbox'])

@@ -1,8 +1,9 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Inbox, LayoutGrid, Settings, Code2 } from 'lucide-react';
+import { Inbox, LayoutGrid, Plus, Settings, Code2 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
+import { Button } from '@/components/ui/button';
 import {
     Sidebar,
     SidebarContent,
@@ -19,11 +20,12 @@ import type { NavItem } from '@/types';
  *
  * When `currentSpace` is shared (we're on /spaces/{slug}/*), the nav is
  * scoped to that Space with Dashboard, Inbox, Embed, and Settings. When
- * no Space is active, the sidebar shows a single Dashboard pointing at
- * the Spaces index.
+ * no Space is active, the sidebar shows a Dashboard link plus a Create-
+ * Space CTA so a 0-Space account still has a clear next action.
  */
 export function AppSidebar() {
-    const { currentSpace } = usePage().props;
+    const { auth, currentSpace } = usePage().props;
+    const spaceCount = auth.user?.spaces?.length ?? 0;
 
     const mainNavItems: NavItem[] = currentSpace
         ? [
@@ -76,6 +78,20 @@ export function AppSidebar() {
 
             <SidebarContent>
                 <NavMain items={mainNavItems} />
+                {!currentSpace && spaceCount === 0 && (
+                    <div className="px-3 pb-3">
+                        <Button
+                            asChild
+                            className="w-full justify-start"
+                            size="sm"
+                        >
+                            <Link href="/spaces/create" prefetch>
+                                <Plus className="size-4" />
+                                Create Space
+                            </Link>
+                        </Button>
+                    </div>
+                )}
             </SidebarContent>
 
             <SidebarFooter>
