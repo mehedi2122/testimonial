@@ -41,8 +41,13 @@ Each group ends with a green local `composer ci:check` before the next one start
 
 ## 5. Custom rule: FieldTypeSpaceFieldVisibility
 
-- [ ] 5.1 `FieldTypeSpaceFieldVisibility` ensures for `type = 'image'` the value passes a base shape check (string ≤ 255 chars); full photo upload/size rules deferred per §9.3
-- [ ] 5.2 Unit test: image value accepted as path, rejected as URL or non-string
+> **Superseded by Group 4.** `SubmissionValue`'s `SpaceFieldType::Image` arm already enforces
+> `string ≤ 255 chars` (the same shape the original Group 5 spec described). A second rule would be
+> an unused duplicate. Marked done via Group 4. Full photo upload/size rules remain deferred per
+> data-model §9.3 and will be added to `SubmissionValue::validateImage` when decided.
+
+- [x] 5.1 Image value shape (string ≤ 255) — covered by `SubmissionValue` `SpaceFieldType::Image`
+- [x] 5.2 Image unit test — covered by `tests/Unit/Rules/SubmissionValueTest.php`
 
 ## 6. Space resolution and SoftDeletes preflight
 
