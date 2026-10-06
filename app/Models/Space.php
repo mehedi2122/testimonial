@@ -92,6 +92,16 @@ class Space extends Model
     }
 
     /**
+     * Use `slug` for authenticated in-app URLs (`/spaces/{slug}/dashboard`)
+     * and `public_id` for the public submission endpoint (already separate).
+     * The primary key never leaks into URLs.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
+    /**
      * @return BelongsTo<User, $this>
      */
     public function user(): BelongsTo

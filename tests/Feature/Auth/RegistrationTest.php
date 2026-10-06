@@ -34,6 +34,7 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        // Newly registered users have 0 spaces → redirect to /spaces.
+        $response->assertRedirect(route('spaces.index', absolute: false));
     }
 }
