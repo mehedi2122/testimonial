@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Embed\EmbedWidgetController;
 use App\Http\Controllers\Public\PublicSubmissionController;
 use App\Http\Controllers\Spaces\SpaceController;
 use App\Http\Controllers\Spaces\TestimonialController;
@@ -58,5 +59,15 @@ Route::post('s/{public_id}/submissions', [PublicSubmissionController::class, 'st
 // only as the form respondents fill out before hitting the POST above.
 Route::get('s/{public_id}', [PublicSubmissionController::class, 'show'])
     ->name('public.submissions.show');
+
+// Public embed widget (OpenSpec: embed-widget). The loader script
+// /embed.js is a static file served by EmbedWidgetController::loader().
+// /embed/{public_id} is the iframe document the loader mounts. No
+// auth, no throttle — a missing public_id is a 404, not a redirect.
+Route::get('embed.js', [EmbedWidgetController::class, 'loader'])
+    ->name('embed.loader');
+Route::get('embed/{publicId}', [EmbedWidgetController::class, 'frame'])
+    ->name('embed.frame')
+    ->where('publicId', '[A-Za-z0-9]+');
 
 require __DIR__.'/settings.php';
