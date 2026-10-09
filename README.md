@@ -37,10 +37,10 @@ Then open <http://localhost:8000>.
 
 **Demo logins** (password `password` for both):
 
-| Email | Plan |
-| --- | --- |
+| Email                | Plan                |
+| -------------------- | ------------------- |
 | `maya@brightcopy.co` | Free plan, 2 Spaces |
-| `dev@shiplog.io` | Pro plan |
+| `dev@shiplog.io`     | Pro plan            |
 
 Locally, mail is written to the log (`MAIL_MAILER=log`), so new accounts are auto-verified. You can register a fresh account without a mail server.
 
@@ -58,19 +58,19 @@ GitHub Actions (`.github/workflows/tests.yml`) runs these checks against both SQ
 
 ## Features
 
-| Area | What it covers | Status |
-| --- | --- | --- |
-| Authentication | Register, login, logout, password reset, email verification, two-factor auth, passkeys | ✅ |
-| Spaces | Create / edit / delete; title, subtitle and the question shown to customers; per-field mode **Off / Optional / Required** for Address, Company, Social link, Profile photo and custom fields; star-rating toggle; themes **Minimal / Modern / Clean**; success page with a copyable public link | ✅ |
-| Public submission page | `/s/{public_id}`: no account needed, optional social-sharing consent, profile photo upload, server-side validation, "Boom!" confirmation | ✅ |
-| Inbox | Favorite, add to Wall of Love, edit, hide/show, delete with confirmation, `…` actions menu | ✅ |
-| Dashboard analytics | Totals, average rating, submissions per day (7 / 30 / 90 days / all time), rating distribution, upgrade banner | ✅ |
-| Embed builder | Masonry or carousel, dark mode, animation, background colour, rating and field visibility, item limit, live preview, copy snippet | ✅ |
-| Embed widget | iframe-based, auto-height, responsive, works on any external site | ✅ |
-| Public Wall of Love | `/wall/{slug}` | ✅ |
-| Plan limits | Enforced server-side. Free: 3 Spaces, 100 testimonials per Space. Pro: 25 Spaces, 1,000 per Space | ✅ |
-| Billing | Billing page, Stripe Checkout, billing portal, webhooks (queued jobs, signature verification). Code is complete and tested with mocks | ✅ |
-| Live Stripe payment | End-to-end payment in Stripe test mode. Needs real test keys (see below) | ⏳ |
+| Area                   | What it covers                                                                                                                                                                                                                                                                                  | Status |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| Authentication         | Register, login, logout, password reset, email verification, two-factor auth, passkeys                                                                                                                                                                                                          | ✅     |
+| Spaces                 | Create / edit / delete; title, subtitle and the question shown to customers; per-field mode **Off / Optional / Required** for Address, Company, Social link, Profile photo and custom fields; star-rating toggle; themes **Minimal / Modern / Clean**; success page with a copyable public link | ✅     |
+| Public submission page | `/s/{public_id}`: no account needed, optional social-sharing consent, profile photo upload, server-side validation, "Boom!" confirmation                                                                                                                                                        | ✅     |
+| Inbox                  | Favorite, add to Wall of Love, edit, hide/show, delete with confirmation, `…` actions menu                                                                                                                                                                                                      | ✅     |
+| Dashboard analytics    | Totals, average rating, submissions per day (7 / 30 / 90 days / all time), rating distribution, upgrade banner                                                                                                                                                                                  | ✅     |
+| Embed builder          | Masonry or carousel, dark mode, animation, background colour, rating and field visibility, item limit, live preview, copy snippet                                                                                                                                                               | ✅     |
+| Embed widget           | iframe-based, auto-height, responsive, works on any external site                                                                                                                                                                                                                               | ✅     |
+| Public Wall of Love    | `/wall/{slug}`                                                                                                                                                                                                                                                                                  | ✅     |
+| Plan limits            | Enforced server-side. Free: 3 Spaces, 100 testimonials per Space. Pro: 25 Spaces, 1,000 per Space                                                                                                                                                                                               | ✅     |
+| Billing                | Billing page, Stripe Checkout, billing portal, webhooks (queued jobs, signature verification). Code is complete and tested with mocks                                                                                                                                                           | ✅     |
+| Live Stripe payment    | End-to-end payment in Stripe test mode. Needs real test keys (see below)                                                                                                                                                                                                                        | ⏳     |
 
 **To finish the live Stripe test:**
 
@@ -105,64 +105,65 @@ This project was built with an AI coding agent (Claude Code). These are the tool
 - **OpenSpec (spec-driven development).** Every feature began as an OpenSpec change: a proposal, spec deltas and a task list. Finished changes are archived under [`openspec/changes/archive/`](openspec/changes/archive), and the specs of record live in [`openspec/specs/`](openspec/specs). Commits named `Group N …` follow those task groups, so the history maps directly to the specs.
 - **CLAUDE.md / AGENTS.md.** These hold project rules, conventions and the exact check commands. They are given to the agent as standing context so every session follows the same rules.
 - **Subagents.**
-  - An independent, read-only **security-review subagent** audited the code and found 6 issues:
-    1. A submitter could self-publish to the Wall of Love.
-    2. Answers were accepted for disabled fields.
-    3. `javascript:` URLs were accepted in link fields.
-    4. The Stripe webhook was unsigned when the secret was missing.
-    5. The full user row was shared to the browser.
-    6. A duplicate field caused a 500 error.
+    - An independent, read-only **security-review subagent** audited the code and found 6 issues:
+        1. A submitter could self-publish to the Wall of Love.
+        2. Answers were accepted for disabled fields.
+        3. `javascript:` URLs were accepted in link fields.
+        4. The Stripe webhook was unsigned when the secret was missing.
+        5. The full user row was shared to the browser.
+        6. A duplicate field caused a 500 error.
 
-    All 6 were fixed, each with a regression test.
-  - This README was written by a subagent in a parallel git worktree, and its branch was merged with `--no-ff`.
+        All 6 were fixed, each with a regression test.
+
+    - This README was written by a subagent in a parallel git worktree, and its branch was merged with `--no-ff`.
 - **Parallel work.** The README was written on its own git worktree and branch while CLAUDE.md was written on `main`. The two merged cleanly.
 - **Browser verification.** A headless Chrome, driven through the Chrome DevTools Protocol, walked through real flows: sign-up/login, public form submission with a photo, themes, mobile widths, and the embed on an external page. This found bugs the unit tests missed:
-  - The public form was broken for Spaces with custom fields.
-  - The success card was never shown.
-  - `&amp;` was double-escaped.
-  - The Embed page overflowed on mobile.
+    - The public form was broken for Spaces with custom fields.
+    - The success card was never shown.
+    - `&amp;` was double-escaped.
+    - The Embed page overflowed on mobile.
 - **Quality gates / CI.** Pint, PHPStan (Larastan), oxlint/oxfmt via `npm run check`, TypeScript and 370 Pest tests. GitHub Actions runs them on SQLite and MySQL 8.
 
 ## Screenshots
 
 ![Sign up](docs/screenshots/01-register.png)
-*Sign up*
+_Sign up_
 
 ![Create a Space](docs/screenshots/02-create-space.png)
-*Create a Space: theme + form fields*
+_Create a Space: theme + form fields_
 
 ![Space created](docs/screenshots/03-space-created.png)
-*Success page with public link*
+_Success page with public link_
 
 ![Public form](docs/screenshots/04-public-form.png)
-*Public testimonial form*
+_Public testimonial form_
 
 ![Public form, Modern theme](docs/screenshots/05-public-form-modern.png)
-*Modern theme*
+_Modern theme_
 
 ![Submitted](docs/screenshots/06-submitted.png)
-*Confirmation*
+_Confirmation_
 
 ![Inbox](docs/screenshots/07-inbox.png)
-*Inbox moderation*
+_Inbox moderation_
 
 ![Dashboard](docs/screenshots/08-dashboard.png)
-*Dashboard analytics*
+_Dashboard analytics_
 
 ![Embed builder](docs/screenshots/09-embed-builder.png)
-*Embed builder + live preview*
+_Embed builder + live preview_
 
 ![Embed on an external site](docs/screenshots/10-embed-external.png)
-*Embed on an external website*
+_Embed on an external website_
 
 ![Wall of Love](docs/screenshots/11-wall-of-love.png)
-*Public Wall of Love*
+_Public Wall of Love_
 
 ![Billing](docs/screenshots/12-billing.png)
-*Billing plans*
+_Billing plans_
 
 ![Mobile](docs/screenshots/13-mobile.png)
-*Mobile view*
+_Mobile view_
 
 ## Project structure
 
