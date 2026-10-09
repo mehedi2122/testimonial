@@ -52,17 +52,6 @@ The system SHALL enforce this requirement.
 - **WHEN** the Space has a `space_fields` row with `type = email`
 - **THEN** any submission to it returns `422 { errors: { 'values.<field_key>': ['email-typed custom fields are not permitted'] } }`
 
-### Requirement: The validation layer SHALL reject submissions where `consent_given = false` and the request sets `is_wall_of_love = true`
-
-The system SHALL enforce this requirement.
-
-The respondent cannot self-promote. The UI hides the toggle; the server enforces. This mirrors data-model §15 at write time.
-
-#### Scenario: self-promotion rejected
-
-- **WHEN** `consent_given = false` AND `is_wall_of_love = true`
-- **THEN** the response is `422 { error: 'consent_required' }`
-
 ### Requirement: The validation layer SHALL reject submissions where the Space has been soft-deleted (resolved before validation)
 
 The system SHALL enforce this requirement.
@@ -86,3 +75,12 @@ A custom field key defined for Space A is rejected when submitted to Space B. Th
 - **THEN** the submission is rejected with `422 { errors: { 'values.<field_key>': ['unknown field_key for this Space'] } }`
 
 ---
+
+### Requirement: URL-type values SHALL use the http or https scheme
+
+The validation layer SHALL reject URL values whose scheme is not `http` or `https` (for example `javascript:`, `data:`, `ftp:`), because URL values render as links on public pages.
+
+#### Scenario: javascript URL
+
+- **WHEN** a URL field value is `javascript://x/%0Aalert(1)`
+- **THEN** the response is 422

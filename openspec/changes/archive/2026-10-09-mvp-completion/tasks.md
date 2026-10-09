@@ -12,4 +12,4 @@
 - [x] 7.1 Mobile: embed grid overflow, inbox header wrap
 - [x] 8.1 Tooling: types:check fixed, unused imports removed, MySQL CI job
 - [x] 9.1 Tests: 362 passing; pint, phpstan, npm run check, types:check and build all pass
-- [ ] 9.2 MySQL CI job green on GitHub — _owner to run (no MySQL locally; the folder is not a git repository)_
+- [x] 9.2 MySQL CI job green on GitHub (run 37912595242: ci ✓, mysql ✓)
