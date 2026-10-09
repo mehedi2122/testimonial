@@ -6,14 +6,20 @@ namespace App\Http\Controllers\Spaces;
 
 use App\Actions\CreateSpaceAction;
 use App\Actions\Dashboards\DashboardAnalyticsAction;
+use App\Actions\Embeds\UpdateEmbedConfigurationAction;
 use App\Actions\UpdateSpaceSettingsAction;
+use App\Enums\EmbedLayout;
 use App\Enums\SpaceTheme;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateSpaceRequest;
+use App\Http\Requests\Spaces\UpdateEmbedConfigurationRequest;
 use App\Http\Requests\UpdateSpaceRequest;
+use App\Models\EmbedConfiguration;
 use App\Models\Space;
+use App\Models\SpaceField;
 use App\Models\Testimonial;
 use App\Models\TestimonialValue;
+use App\Support\EmbedSnippet;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -202,9 +208,59 @@ class SpaceController extends Controller
         ]);
     }
 
+    /**
+     * Embed Builder (OpenSpec change: embed-builder). Replaces the
+     * placeholder page with a 3-pane builder: configuration form
+     * (left), live preview (right), copyable embed snippet (bottom).
+     *
+     * Authorization: `SpacePolicy::view` already covers the
+     * form-prep step — the same `view` policy gates `dashboard`,
+     * `inbox`, and `settings`. The PATCH route below uses
+     * `updateEmbed` for symmetry with the rest of the controller.
+     *
+     * `embed` is the saved row OR a default-shaped stub when no
+     * `embed_configurations` row exists yet — the page must render
+     * before the owner has saved anything. `testimonials` is a small
+     * slice of public testimonials used by the live preview (the
+     * future `embed-widget` will use the same query).
+     */
     public function embed(Space $space): Response
     {
         Gate::authorize('view', $space);
+
+        $space->loadMissing('embedConfiguration', 'fields');
+
+        $config = $space->embedConfiguration ?? $this->defaultEmbedConfiguration($space);
+
+        $fields = $space->fields
+            ->whereNull('deleted_at')
+            ->sortBy('sort_order')
+            ->values()
+            ->map(fn (SpaceField $field): array => [
+                'key' => $field->field_key,
+                'label' => $field->label,
+                'show_in_embed' => $field->show_in_embed,
+            ])
+            ->all();
+
+        $testimonials = $space->testimonials()
+            ->publiclyVisible()
+            ->with('values.spaceField')
+            ->limit(6)
+            ->get()
+            ->map(fn (Testimonial $t): array => [
+                'id' => $t->id,
+                'name' => $t->name,
+                'testimonial' => $t->testimonial,
+                'rating' => $t->rating,
+                'is_favorite' => $t->is_favorite,
+                'submitted_at' => $t->submitted_at->toIso8601String(),
+                'values' => $t->values->map(fn (TestimonialValue $v): array => [
+                    'field_key' => $v->spaceField?->field_key,
+                    'label' => $v->spaceField?->label,
+                    'value' => $v->value,
+                ])->all(),
+            ])->all();
 
         return Inertia::render('spaces/embed', [
             'space' => [
@@ -212,8 +268,68 @@ class SpaceController extends Controller
                 'slug' => $space->slug,
                 'name' => $space->name,
                 'public_id' => $space->public_id,
+                'rating_enabled' => $space->rating_enabled,
             ],
+            'embed' => [
+                'layout' => $config->layout->value,
+                'dark_mode' => $config->dark_mode,
+                'animation_enabled' => $config->animation_enabled,
+                'show_rating' => $config->show_rating,
+                'background_color' => $config->background_color,
+                'item_limit' => $config->item_limit,
+            ],
+            'fields' => $fields,
+            'layouts' => array_map(
+                fn (EmbedLayout $layout): array => [
+                    'value' => $layout->value,
+                    'label' => $layout->name,
+                ],
+                EmbedLayout::cases(),
+            ),
+            'testimonials' => $testimonials,
+            'snippet' => EmbedSnippet::for($space, $config),
         ]);
+    }
+
+    /**
+     * Persist Embed Builder form (OpenSpec change: embed-builder).
+     * `Gate::authorize('updateEmbed', $space)` is the single gate; the
+     * action does the field-visibility sync. Redirects back to the
+     * page so the success flash + new snippet are visible immediately.
+     */
+    public function updateEmbed(
+        Space $space,
+        UpdateEmbedConfigurationRequest $request,
+        UpdateEmbedConfigurationAction $action,
+    ): RedirectResponse {
+        Gate::authorize('updateEmbed', $space);
+
+        $action->run($space, $request->validatedPayload());
+
+        return redirect()
+            ->route('spaces.embed', ['space' => $space->slug])
+            ->with('success', 'Embed settings saved.');
+    }
+
+    /**
+     * Shape a transient EmbedConfiguration with the schema defaults so
+     * the page renders before the owner has saved anything. Never
+     * persisted — `EmbedSnippet::for` only reads the public surface of
+     * the model, so a non-persisted instance with the fields filled in
+     * is enough.
+     */
+    private function defaultEmbedConfiguration(Space $space): EmbedConfiguration
+    {
+        $stub = new EmbedConfiguration;
+        $stub->space_id = $space->id;
+        $stub->layout = EmbedLayout::Masonry;
+        $stub->dark_mode = false;
+        $stub->animation_enabled = true;
+        $stub->show_rating = true;
+        $stub->background_color = null;
+        $stub->item_limit = 12;
+
+        return $stub;
     }
 
     /**

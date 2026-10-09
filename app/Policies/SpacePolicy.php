@@ -49,4 +49,15 @@ class SpacePolicy
     {
         return $user->id === $space->user_id;
     }
+
+    /**
+     * Owner can update the Space's embed configuration (layout, theme,
+     * visibility toggles). Used by `SpaceController::embed` (GET — for
+     * preparing the form) and `SpaceController::updateEmbed` (PATCH).
+     * OpenSpec change: embed-builder.
+     */
+    public function updateEmbed(User $user, Space $space): bool
+    {
+        return $user->id === $space->user_id;
+    }
 }

@@ -23,6 +23,8 @@ Route::middleware(['auth', 'verified'])->prefix('spaces')->name('spaces.')->grou
         ->name('inbox');
     Route::get('/{space}/embed', [SpaceController::class, 'embed'])
         ->name('embed');
+    Route::patch('/{space}/embed', [SpaceController::class, 'updateEmbed'])
+        ->name('embed.update');
     Route::get('/{space}/settings', [SpaceController::class, 'settings'])
         ->name('settings');
     Route::patch('/{space}/settings', [SpaceController::class, 'updateSettings'])
