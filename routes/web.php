@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Embed\EmbedWidgetController;
 use App\Http\Controllers\Public\PublicSubmissionController;
+use App\Http\Controllers\Public\PublicWallController;
 use App\Http\Controllers\Spaces\SpaceController;
 use App\Http\Controllers\Spaces\TestimonialController;
 use Illuminate\Support\Facades\Route;
@@ -69,5 +70,13 @@ Route::get('embed.js', [EmbedWidgetController::class, 'loader'])
 Route::get('embed/{publicId}', [EmbedWidgetController::class, 'frame'])
     ->name('embed.frame')
     ->where('publicId', '[A-Za-z0-9]+');
+
+// Public Wall of Love page (OpenSpec: public-wall-of-love). Auth-free
+// GET — the page is the owner-shared marketing surface (Twitter,
+// LinkedIn, email signatures), so the routing key is `slug` (human
+// readable, owner-editable), not the immutable `public_id` used by
+// the embed. No throttle — read-only, low traffic.
+Route::get('wall/{slug}', [PublicWallController::class, 'show'])
+    ->name('public.wall.show');
 
 require __DIR__.'/settings.php';
