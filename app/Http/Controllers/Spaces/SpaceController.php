@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Spaces;
 
 use App\Actions\CreateSpaceAction;
+use App\Actions\Dashboards\DashboardAnalyticsAction;
 use App\Actions\UpdateSpaceSettingsAction;
 use App\Enums\SpaceTheme;
 use App\Http\Controllers\Controller;
@@ -126,9 +127,14 @@ class SpaceController extends Controller
             ->with('success', "Space \"{$name}\" deleted.");
     }
 
-    public function dashboard(Space $space): Response
-    {
+    public function dashboard(
+        Space $space,
+        Request $request,
+        DashboardAnalyticsAction $action,
+    ): Response {
         Gate::authorize('view', $space);
+
+        $range = (string) $request->query('range', DashboardAnalyticsAction::RANGE_30D);
 
         return Inertia::render('spaces/dashboard', [
             'space' => [
@@ -136,6 +142,7 @@ class SpaceController extends Controller
                 'slug' => $space->slug,
                 'name' => $space->name,
             ],
+            'analytics' => $action->for($space, $range),
         ]);
     }
 
