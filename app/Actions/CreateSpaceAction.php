@@ -7,9 +7,8 @@ namespace App\Actions;
 use App\Enums\Plan;
 use App\Models\Space;
 use App\Models\User;
+use App\Support\UniqueSpaceSlug;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-use RuntimeException;
 
 /**
  * Space creation (OpenSpec change: space-crud).
@@ -70,7 +69,7 @@ class CreateSpaceAction
     public function create(User $user, array $validated): Space
     {
         return DB::connection()->transaction(function () use ($user, $validated): Space {
-            $slug = $this->uniqueSlug((string) $validated['name']);
+            $slug = UniqueSpaceSlug::for((string) $validated['name']);
 
             $space = Space::query()->create([
                 'user_id' => $user->id,
@@ -85,36 +84,5 @@ class CreateSpaceAction
 
             return $space;
         });
-    }
-
-    /**
-     * Build a slug from the Space name and guarantee uniqueness across
-     * both live and soft-deleted rows (the latter intentionally reserve
-     * their slug so a "undelete" never silently re-binds an existing
-     * /spaces/{slug} URL).
-     */
-    private function uniqueSlug(string $name): string
-    {
-        $base = Str::slug($name);
-        if ($base === '') {
-            $base = 'space';
-        }
-
-        $candidate = $base;
-        for ($attempt = 0; $attempt < 5; $attempt++) {
-            $exists = Space::withTrashed()
-                ->where('slug', $candidate)
-                ->exists();
-
-            if (! $exists) {
-                return $candidate;
-            }
-
-            $candidate = $base.'-'.Str::lower(Str::random(4));
-        }
-
-        throw new RuntimeException(
-            "Could not generate a unique slug for Space \"{$name}\" after 5 attempts."
-        );
     }
 }

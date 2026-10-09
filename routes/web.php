@@ -25,6 +25,8 @@ Route::middleware(['auth', 'verified'])->prefix('spaces')->name('spaces.')->grou
         ->name('embed');
     Route::get('/{space}/settings', [SpaceController::class, 'settings'])
         ->name('settings');
+    Route::patch('/{space}/settings', [SpaceController::class, 'updateSettings'])
+        ->name('settings.update');
 
     // Testimonial moderation (testimonial-inbox OpenSpec change). Each
     // testimonial row's URL includes both the parent space slug and the

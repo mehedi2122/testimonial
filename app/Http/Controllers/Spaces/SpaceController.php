@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Spaces;
 
 use App\Actions\CreateSpaceAction;
+use App\Actions\UpdateSpaceSettingsAction;
 use App\Enums\SpaceTheme;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateSpaceRequest;
+use App\Http\Requests\UpdateSpaceRequest;
 use App\Models\Space;
 use App\Models\Testimonial;
 use App\Models\TestimonialValue;
@@ -29,6 +31,11 @@ use Inertia\Response;
  * discovered). The policy class covers view / update / delete — adding
  * a new mutation surface is a one-line `Gate::authorize(...)` call,
  * not a new inline `abort_unless`.
+ *
+ * All four space-scoped GETs (dashboard / inbox / embed / settings) run
+ * `Gate::authorize('view', $space)`. Before the space-settings change
+ * only `inbox` did, which left the other three open to any
+ * authenticated user who guessed a slug.
  */
 class SpaceController extends Controller
 {
@@ -121,6 +128,8 @@ class SpaceController extends Controller
 
     public function dashboard(Space $space): Response
     {
+        Gate::authorize('view', $space);
+
         return Inertia::render('spaces/dashboard', [
             'space' => [
                 'id' => $space->id,
@@ -188,6 +197,8 @@ class SpaceController extends Controller
 
     public function embed(Space $space): Response
     {
+        Gate::authorize('view', $space);
+
         return Inertia::render('spaces/embed', [
             'space' => [
                 'id' => $space->id,
@@ -198,14 +209,60 @@ class SpaceController extends Controller
         ]);
     }
 
+    /**
+     * Settings editor (OpenSpec change: space-settings). Renders the
+     * full mutable-field set so the React form can pre-fill every
+     * input. `themes` mirrors the create page so the picker stays a thin
+     * shim over the enum. `public_id` is shipped read-only so the
+     * owner can copy the embed snippet without leaving the page.
+     */
     public function settings(Space $space): Response
     {
+        Gate::authorize('view', $space);
+
         return Inertia::render('spaces/settings', [
             'space' => [
                 'id' => $space->id,
                 'slug' => $space->slug,
                 'name' => $space->name,
+                'title' => $space->title,
+                'subtitle' => $space->subtitle,
+                'ask' => $space->ask,
+                'theme' => $space->theme->value,
+                'rating_enabled' => $space->rating_enabled,
+                'public_id' => $space->public_id,
+                'created_at' => $space->created_at?->toIso8601String(),
             ],
+            'themes' => array_map(
+                fn (SpaceTheme $theme): array => [
+                    'value' => $theme->value,
+                    'label' => $theme->name,
+                ],
+                SpaceTheme::cases(),
+            ),
         ]);
+    }
+
+    /**
+     * Persist owner edits to the Space's mutable fields
+     * (OpenSpec change: space-settings). Validation runs through
+     * {@see UpdateSpaceRequest}, ownership is enforced by
+     * `SpacePolicy::update`, and the mutation is dispatched to
+     * {@see UpdateSpaceSettingsAction}. Slug is regenerated server-side
+     * when `name` changes, so we redirect to the *new* slug to keep the
+     * round-trip clean.
+     */
+    public function updateSettings(
+        Space $space,
+        UpdateSpaceRequest $request,
+        UpdateSpaceSettingsAction $action,
+    ): RedirectResponse {
+        Gate::authorize('update', $space);
+
+        $space = $action->update($space, $request->validated());
+
+        return redirect()
+            ->route('spaces.settings', ['space' => $space->slug])
+            ->with('success', 'Settings saved.');
     }
 }
