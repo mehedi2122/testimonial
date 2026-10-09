@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -37,10 +39,12 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * In local environments, auto-mark newly registered users as email-verified
-     * so the /spaces/* verified-middleware gate does not block local sign-up →
-     * log-in → dashboard testing. Production and other non-local environments
-     * are unaffected and continue to require the user to click the
+     * In local environments mail goes to the log (MAIL_MAILER=log), so a
+     * verification link never reaches anyone and the /spaces/* `verified`
+     * gate would strand the account on "Verify your email". Auto-verify on
+     * every way into that state: registration, login (accounts created
+     * before this existed), and an email change in Settings. Production and
+     * other non-local environments are unaffected and still require the
      * verification link.
      */
     protected function configureLocalAutoVerify(): void
@@ -49,14 +53,27 @@ class AppServiceProvider extends ServiceProvider
             return;
         }
 
-        Event::listen(Registered::class, function (Registered $event): void {
-            $user = $event->user;
-
-            if (method_exists($user, 'hasVerifiedEmail') && $user->hasVerifiedEmail()) {
+        $verify = function (mixed $user): void {
+            if (! $user instanceof User || $user->hasVerifiedEmail()) {
                 return;
             }
 
-            $user->forceFill(['email_verified_at' => now()])->save();
+            // Write straight to the row: this can run inside the model's own
+            // `saved` event, where a nested save() compares against the
+            // not-yet-synced original and may skip the write entirely.
+            $now = now();
+            User::query()->whereKey($user->getKey())->update(['email_verified_at' => $now]);
+            $user->forceFill(['email_verified_at' => $now])->syncOriginalAttribute('email_verified_at');
+        };
+
+        Event::listen(Registered::class, fn (Registered $event) => $verify($event->user));
+        Event::listen(Login::class, fn (Login $event) => $verify($event->user));
+
+        // Settings → Profile clears email_verified_at when the email changes.
+        User::saved(function (User $user) use ($verify): void {
+            if ($user->wasChanged('email')) {
+                $verify($user);
+            }
         });
     }
 

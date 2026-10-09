@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\SpaceThemeCast;
 use App\Enums\SpaceTheme;
 use Database\Factories\SpaceFactory;
 use Illuminate\Database\Eloquent\Collection;
@@ -51,7 +52,7 @@ class Space extends Model
     ];
 
     protected $casts = [
-        'theme' => SpaceTheme::class,
+        'theme' => SpaceThemeCast::class,
         'rating_enabled' => 'boolean',
     ];
 
