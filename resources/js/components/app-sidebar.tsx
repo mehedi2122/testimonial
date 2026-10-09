@@ -1,5 +1,12 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Inbox, LayoutGrid, Plus, Settings, Code2 } from 'lucide-react';
+import {
+    Code2,
+    CreditCard,
+    Inbox,
+    LayoutGrid,
+    Plus,
+    Settings,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -22,12 +29,13 @@ import type { NavItem } from '@/types';
  * scoped to that Space with Dashboard, Inbox, Embed, and Settings. When
  * no Space is active, the sidebar shows a Dashboard link plus a Create-
  * Space CTA so a 0-Space account still has a clear next action.
+ * Billing is account-level, so it is appended in both variants.
  */
 export function AppSidebar() {
     const { auth, currentSpace } = usePage().props;
     const spaceCount = auth.user?.spaces?.length ?? 0;
 
-    const mainNavItems: NavItem[] = currentSpace
+    const spaceNavItems: NavItem[] = currentSpace
         ? [
               {
                   title: 'Dashboard',
@@ -57,6 +65,15 @@ export function AppSidebar() {
                   icon: LayoutGrid,
               },
           ];
+
+    const mainNavItems: NavItem[] = [
+        ...spaceNavItems,
+        {
+            title: 'Billing',
+            href: '/billing',
+            icon: CreditCard,
+        },
+    ];
 
     const logoHref = currentSpace
         ? `/spaces/${currentSpace.slug}/dashboard`

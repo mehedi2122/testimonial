@@ -44,7 +44,7 @@ class EmbedBuilderTest extends TestCase
             ->where('embed.background_color', null)
             ->where('embed.item_limit', 12)
             ->has('layouts', 2)
-            ->has('fields', 3)
+            ->has('fields', 4)
             ->has('testimonials', 0)
             ->has('snippet')
         );
@@ -282,7 +282,7 @@ class EmbedBuilderTest extends TestCase
         );
 
         $this->assertDatabaseCount('embed_configurations', 1);
-        $this->assertSame(3, $space->fields()->count());
+        $this->assertSame(4, $space->fields()->count());
     }
 
     public function test_field_visibility_round_trip(): void
@@ -316,8 +316,11 @@ class EmbedBuilderTest extends TestCase
         $response = $this->actingAs($user)
             ->get(route('spaces.embed', ['space' => $space->slug]));
         $response->assertInertia(fn ($page) => $page
-            ->where('fields.0.key', 'company_name')
+            // fields.0 is Address (sort_order 5, private by default).
+            ->where('fields.0.key', 'address')
             ->where('fields.0.show_in_embed', false)
+            ->where('fields.1.key', 'company_name')
+            ->where('fields.1.show_in_embed', false)
         );
     }
 

@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\SpaceFieldMode;
 use App\Enums\SpaceTheme;
 use Database\Factories\SpaceFactory;
 use Illuminate\Database\Eloquent\Collection;
@@ -66,15 +65,17 @@ class Space extends Model
         });
 
         static::created(function (Space $space): void {
-            // Every new Space gets three predefined rows at mode = 'off'.
-            // Custom fields append with sort_order above 30.
+            // Every new Space gets the predefined rows (PRD §8): Address on
+            // and required, the optional fields off. Custom fields append
+            // with sort_order above 30.
             foreach (SpaceField::PREDEFINED_FIELDS as $row) {
                 $space->fields()->create([
                     'field_key' => $row['field_key'],
                     'label' => $row['label'],
                     'type' => $row['type'],
                     'sort_order' => $row['sort_order'],
-                    'mode' => SpaceFieldMode::Off,
+                    'mode' => $row['mode'],
+                    'show_in_embed' => $row['show_in_embed'],
                 ]);
             }
         });
@@ -99,6 +100,18 @@ class Space extends Model
     public function getRouteKeyName(): string
     {
         return 'slug';
+    }
+
+    /** Public submission form respondents open (keyed by `public_id`). */
+    public function publicSubmissionUrl(): string
+    {
+        return route('public.submissions.show', ['public_id' => $this->public_id]);
+    }
+
+    /** Public Wall of Love page (keyed by `slug`). */
+    public function publicWallUrl(): string
+    {
+        return route('public.wall.show', ['slug' => $this->slug]);
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Actions\Photos\StoreTestimonialPhotoAction;
 use App\Enums\Plan;
 use App\Models\Space;
 use App\Models\Testimonial;
@@ -89,11 +90,16 @@ class SubmitTestimonialAction
      * plan-limit check above is the guard against over-cap inserts from
      * concurrent submissions (the next request re-counts and rejects).
      *
+     * `$photoPaths` maps an image field_key to the storage path produced by
+     * {@see StoreTestimonialPhotoAction}; those are stored verbatim (they
+     * are server-generated, not user text).
+     *
      * @param  array<string, mixed>  $payload  validated submission body
+     * @param  array<string, string>  $photoPaths
      */
-    public function create(Space $space, array $payload): Testimonial
+    public function create(Space $space, array $payload, array $photoPaths = []): Testimonial
     {
-        return DB::connection()->transaction(function () use ($space, $payload): Testimonial {
+        return DB::connection()->transaction(function () use ($space, $payload, $photoPaths): Testimonial {
             $testimonial = Testimonial::query()->create([
                 'space_id' => $space->id,
                 'name' => $this->sanitize($payload['name'] ?? ''),
@@ -101,7 +107,8 @@ class SubmitTestimonialAction
                 'testimonial' => $this->sanitize($payload['testimonial'] ?? ''),
                 'rating' => $payload['rating'] ?? null,
                 'consent_given' => (bool) ($payload['consent_given'] ?? false),
-                'is_wall_of_love' => (bool) ($payload['is_wall_of_love'] ?? false),
+                // Never from the request: only the owner publishes (PRD §17).
+                'is_wall_of_love' => false,
                 'submitted_at' => now(),
             ]);
 
@@ -124,6 +131,20 @@ class SubmitTestimonialAction
                     'testimonial_id' => $testimonial->id,
                     'space_field_id' => (int) $fieldId,
                     'value' => $this->sanitize((string) ($entry['value'] ?? '')),
+                ]);
+            }
+
+            foreach ($photoPaths as $fieldKey => $path) {
+                $fieldId = $fieldKeyToId[$fieldKey] ?? null;
+
+                if ($fieldId === null) {
+                    continue;
+                }
+
+                TestimonialValue::query()->create([
+                    'testimonial_id' => $testimonial->id,
+                    'space_field_id' => (int) $fieldId,
+                    'value' => $path,
                 ]);
             }
 

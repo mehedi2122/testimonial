@@ -1,5 +1,7 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, LoaderCircle } from 'lucide-react';
+import { FieldModesEditor, modesFrom } from '@/components/field-modes-editor';
+import type { EditableField, FieldMode } from '@/components/field-modes-editor';
 import { SpacePageShell } from '@/components/space-page-shell';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -22,6 +24,7 @@ type ThemeOption = {
 
 type SpaceCreateProps = PageProps & {
     themes: ThemeOption[];
+    fields: EditableField[];
 };
 
 type CreateSpaceForm = {
@@ -31,6 +34,7 @@ type CreateSpaceForm = {
     ask: string;
     theme: string;
     rating_enabled: boolean;
+    fields: Record<string, FieldMode>;
 };
 
 /**
@@ -42,15 +46,16 @@ type CreateSpaceForm = {
  * Plain HTML form via `useForm` — no RHF — matching the existing
  * settings/* pattern (see `manage-passkeys.tsx`).
  */
-export default function SpaceCreate({ themes }: SpaceCreateProps) {
+export default function SpaceCreate({ themes, fields }: SpaceCreateProps) {
     const { data, setData, post, processing, errors } =
         useForm<CreateSpaceForm>({
             name: '',
             title: '',
             subtitle: '',
             ask: '',
-            theme: themes[0]?.value ?? 'minimal_light',
+            theme: themes[0]?.value ?? 'minimal',
             rating_enabled: true,
+            fields: modesFrom(fields),
         });
 
     const submit = (event: React.FormEvent<HTMLFormElement>): void => {
@@ -193,6 +198,12 @@ export default function SpaceCreate({ themes }: SpaceCreateProps) {
                         Let respondents include a 1–5 star rating
                     </Label>
                 </div>
+
+                <FieldModesEditor
+                    fields={fields}
+                    value={data.fields}
+                    onChange={(value) => setData('fields', value)}
+                />
 
                 <div className="flex items-center justify-between border-t border-sidebar-border/70 pt-6">
                     <Button

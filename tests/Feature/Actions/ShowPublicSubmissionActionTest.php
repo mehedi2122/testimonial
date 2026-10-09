@@ -56,8 +56,9 @@ class ShowPublicSubmissionActionTest extends TestCase
 
         $resolved = (new ShowPublicSubmissionAction)->resolve($space->public_id);
 
+        // Address keeps its seeded sort_order (5), so it leads.
         $this->assertSame(
-            ['social_url', 'profile_photo', 'company_name'],
+            ['address', 'social_url', 'profile_photo', 'company_name'],
             $resolved->fields->pluck('field_key')->all(),
         );
     }
@@ -86,6 +87,6 @@ class ShowPublicSubmissionActionTest extends TestCase
         $space = Space::factory()->for($user)->create();
 
         // Sanity check the factory seeded the predefined fields.
-        $this->assertSame(3, $space->fields()->count());
+        $this->assertSame(4, $space->fields()->count());
     }
 }

@@ -147,7 +147,7 @@ class UpdateEmbedConfigurationActionTest extends TestCase
 
         // Space::created seeds 3 predefined fields. Verify they're all
         // show_in_embed=true initially.
-        $this->assertSame(3, $space->fields()->count());
+        $this->assertSame(4, $space->fields()->count());
         $this->assertSame(
             3,
             $space->fields()->where('show_in_embed', true)->count(),
@@ -183,7 +183,7 @@ class UpdateEmbedConfigurationActionTest extends TestCase
         $user = User::factory()->create();
         $space = Space::factory()->for($user)->create();
 
-        $this->assertSame(3, $space->fields()->count());
+        $this->assertSame(4, $space->fields()->count());
 
         (new UpdateEmbedConfigurationAction)->run($space, [
             'layout' => EmbedLayout::Masonry->value,
@@ -200,7 +200,7 @@ class UpdateEmbedConfigurationActionTest extends TestCase
         ]);
 
         // No new rows created.
-        $this->assertSame(3, $space->fields()->count());
+        $this->assertSame(4, $space->fields()->count());
         // The known key still applied.
         $this->assertTrue(
             $space->fields()->where('field_key', 'company_name')->value('show_in_embed'),

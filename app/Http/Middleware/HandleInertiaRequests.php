@@ -51,8 +51,18 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
+                // Explicit allowlist: every page (including public ones the
+                // owner happens to visit) embeds this in its HTML, so new
+                // users columns (Stripe ids, card brand/last four…) must
+                // never ride along by default.
                 'user' => $user === null ? null : [
-                    ...$user->toArray(),
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'email_verified_at' => $user->email_verified_at?->toIso8601String(),
+                    'two_factor_enabled' => $user->two_factor_confirmed_at !== null,
+                    'created_at' => $user->created_at?->toIso8601String(),
+                    'updated_at' => $user->updated_at?->toIso8601String(),
                     'spaces' => $spaces,
                 ],
             ],

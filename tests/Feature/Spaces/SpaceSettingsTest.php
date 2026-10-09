@@ -58,7 +58,7 @@ class SpaceSettingsTest extends TestCase
             'title' => 'Old title',
             'subtitle' => 'Old subtitle',
             'ask' => 'Old ask',
-            'theme' => SpaceTheme::MinimalLight,
+            'theme' => SpaceTheme::Minimal,
             'rating_enabled' => true,
         ]);
 
@@ -69,7 +69,7 @@ class SpaceSettingsTest extends TestCase
                 'title' => 'New title',
                 'subtitle' => 'New subtitle',
                 'ask' => 'New ask copy',
-                'theme' => SpaceTheme::MinimalDark->value,
+                'theme' => SpaceTheme::Modern->value,
                 'rating_enabled' => false,
             ],
         );
@@ -83,7 +83,7 @@ class SpaceSettingsTest extends TestCase
         $this->assertSame('New title', $fresh->title);
         $this->assertSame('New subtitle', $fresh->subtitle);
         $this->assertSame('New ask copy', $fresh->ask);
-        $this->assertSame(SpaceTheme::MinimalDark, $fresh->theme);
+        $this->assertSame(SpaceTheme::Modern, $fresh->theme);
         $this->assertFalse($fresh->rating_enabled);
     }
 
@@ -120,7 +120,7 @@ class SpaceSettingsTest extends TestCase
                 'title' => 'Hijacked title',
                 'subtitle' => null,
                 'ask' => 'Hijacked ask',
-                'theme' => SpaceTheme::MinimalLight->value,
+                'theme' => SpaceTheme::Minimal->value,
                 'rating_enabled' => true,
             ],
         )->assertForbidden();
@@ -142,7 +142,7 @@ class SpaceSettingsTest extends TestCase
                 'title' => 'Zombie title',
                 'subtitle' => null,
                 'ask' => 'Zombie ask',
-                'theme' => SpaceTheme::MinimalLight->value,
+                'theme' => SpaceTheme::Minimal->value,
                 'rating_enabled' => true,
             ],
         )->assertNotFound();
@@ -184,5 +184,64 @@ class SpaceSettingsTest extends TestCase
         $this->actingAs($other)
             ->get(route('spaces.embed', ['space' => $space->slug]))
             ->assertForbidden();
+    }
+
+    public function test_owner_can_configure_field_modes(): void
+    {
+        $user = User::factory()->create();
+        $space = Space::factory()->for($user)->create();
+
+        $this->actingAs($user)
+            ->patch(route('spaces.settings.update', ['space' => $space->slug]), [
+                'name' => $space->name,
+                'title' => $space->title,
+                'ask' => $space->ask,
+                'theme' => SpaceTheme::Clean->value,
+                'rating_enabled' => true,
+                'fields' => [
+                    'address' => 'optional',
+                    'company_name' => 'required',
+                    'profile_photo' => 'optional',
+                    'not_a_field' => 'required',
+                ],
+            ])
+            ->assertSessionHasNoErrors();
+
+        $modes = $space->fields()->pluck('mode', 'field_key')->map->value->all();
+        $this->assertSame('optional', $modes['address']);
+        $this->assertSame('required', $modes['company_name']);
+        $this->assertSame('optional', $modes['profile_photo']);
+        $this->assertSame('off', $modes['social_url']);
+        $this->assertArrayNotHasKey('not_a_field', $modes);
+    }
+
+    public function test_invalid_field_mode_is_rejected(): void
+    {
+        $user = User::factory()->create();
+        $space = Space::factory()->for($user)->create();
+
+        $this->actingAs($user)
+            ->patch(route('spaces.settings.update', ['space' => $space->slug]), [
+                'name' => $space->name,
+                'title' => $space->title,
+                'ask' => $space->ask,
+                'theme' => SpaceTheme::Minimal->value,
+                'rating_enabled' => true,
+                'fields' => ['address' => 'sometimes'],
+            ])
+            ->assertSessionHasErrors('fields.address');
+    }
+
+    public function test_settings_page_lists_fields_with_modes(): void
+    {
+        $user = User::factory()->create();
+        $space = Space::factory()->for($user)->create();
+
+        $this->actingAs($user)
+            ->get(route('spaces.settings', ['space' => $space->slug]))
+            ->assertInertia(fn ($page) => $page
+                ->where('fields.0.field_key', 'address')
+                ->where('fields.0.mode', 'required')
+            );
     }
 }

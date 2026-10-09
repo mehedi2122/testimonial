@@ -80,15 +80,15 @@ it('retains the slug when a Space is soft-deleted', function (): void {
     expect(Space::withTrashed()->where('slug', 'reserved')->exists())->toBeTrue();
 });
 
-it('seeds three predefined space fields on creation, all mode=off', function (): void {
+it('seeds the predefined space fields on creation: Address required, the rest off', function (): void {
     $space = Space::factory()->create();
 
     $keys = $space->fields()->pluck('field_key')->all();
 
-    expect($keys)->toContain('company_name', 'social_url', 'profile_photo');
+    expect($keys)->toContain('address', 'company_name', 'social_url', 'profile_photo');
 
     foreach ($space->fields as $field) {
-        expect($field->mode)->toBe(SpaceFieldMode::Off);
+        expect($field->mode)->toBe($field->field_key === 'address' ? SpaceFieldMode::Required : SpaceFieldMode::Off);
     }
 });
 

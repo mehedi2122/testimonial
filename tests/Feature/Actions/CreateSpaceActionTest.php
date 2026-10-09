@@ -69,7 +69,7 @@ class CreateSpaceActionTest extends TestCase
             'title' => 'What customers say',
             'subtitle' => 'Real feedback',
             'ask' => 'What do you think?',
-            'theme' => SpaceTheme::MinimalLight->value,
+            'theme' => SpaceTheme::Minimal->value,
             'rating_enabled' => true,
         ]);
 
@@ -77,13 +77,15 @@ class CreateSpaceActionTest extends TestCase
         $this->assertSame('Customer Wins', $space->name);
         $this->assertSame('customer-wins', $space->slug);
         $this->assertNotEmpty($space->public_id);
-        $this->assertSame(SpaceTheme::MinimalLight, $space->theme);
+        $this->assertSame(SpaceTheme::Minimal, $space->theme);
         $this->assertTrue($space->rating_enabled);
 
         $fields = $space->fields()->orderBy('sort_order')->get();
-        $this->assertCount(3, $fields);
-        $this->assertSame(['company_name', 'social_url', 'profile_photo'], $fields->pluck('field_key')->all());
-        $this->assertContains($fields->first()->mode, [SpaceFieldMode::Off]);
+        $this->assertCount(4, $fields);
+        $this->assertSame(['address', 'company_name', 'social_url', 'profile_photo'], $fields->pluck('field_key')->all());
+        // PRD §8: Address is on and required by default, and private.
+        $this->assertSame(SpaceFieldMode::Required, $fields->first()->mode);
+        $this->assertFalse($fields->first()->show_in_embed);
     }
 
     public function test_create_appends_random_suffix_on_slug_collision(): void
@@ -95,7 +97,7 @@ class CreateSpaceActionTest extends TestCase
             'name' => 'Roadmap',
             'title' => 't',
             'ask' => 'aaaaa',
-            'theme' => SpaceTheme::MinimalDark->value,
+            'theme' => SpaceTheme::Modern->value,
             'rating_enabled' => false,
         ]);
 
@@ -104,7 +106,7 @@ class CreateSpaceActionTest extends TestCase
             'name' => 'Roadmap',
             'title' => 't',
             'ask' => 'aaaaa',
-            'theme' => SpaceTheme::MinimalDark->value,
+            'theme' => SpaceTheme::Modern->value,
             'rating_enabled' => false,
         ]);
 
@@ -120,7 +122,7 @@ class CreateSpaceActionTest extends TestCase
             'name' => 'Echo',
             'title' => 't',
             'ask' => 'aaaaa',
-            'theme' => SpaceTheme::MinimalLight->value,
+            'theme' => SpaceTheme::Minimal->value,
             'rating_enabled' => true,
         ]);
         $existing->delete(); // soft delete
@@ -129,7 +131,7 @@ class CreateSpaceActionTest extends TestCase
             'name' => 'Echo',
             'title' => 't',
             'ask' => 'aaaaa',
-            'theme' => SpaceTheme::MinimalLight->value,
+            'theme' => SpaceTheme::Minimal->value,
             'rating_enabled' => true,
         ]);
 
@@ -144,13 +146,15 @@ class CreateSpaceActionTest extends TestCase
             'name' => 'Quiet',
             'title' => 't',
             'ask' => 'aaaaa',
-            'theme' => SpaceTheme::SoftColor->value,
+            'theme' => SpaceTheme::Clean->value,
             'rating_enabled' => true,
         ]);
 
-        $this->assertTrue(
-            $space->fields()->where('mode', SpaceFieldMode::Off)->exists(),
+        // The optional predefined fields start off; only Address is required.
+        $this->assertSame(
+            ['company_name', 'social_url', 'profile_photo'],
+            $space->fields()->where('mode', SpaceFieldMode::Off)->orderBy('sort_order')->pluck('field_key')->all(),
         );
-        $this->assertSame(0, $space->fields()->where('mode', SpaceFieldMode::Required)->count());
+        $this->assertSame(['address'], $space->fields()->where('mode', SpaceFieldMode::Required)->pluck('field_key')->all());
     }
 }

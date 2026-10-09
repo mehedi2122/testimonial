@@ -28,7 +28,7 @@ class SpaceFactory extends Factory
             'title' => ucwords($name),
             'subtitle' => fake()->sentence(),
             'ask' => fake()->paragraph(),
-            'theme' => SpaceTheme::MinimalLight,
+            'theme' => SpaceTheme::Minimal,
             'rating_enabled' => true,
         ];
     }

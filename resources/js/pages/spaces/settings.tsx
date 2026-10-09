@@ -1,5 +1,7 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, LoaderCircle } from 'lucide-react';
+import { FieldModesEditor, modesFrom } from '@/components/field-modes-editor';
+import type { EditableField, FieldMode } from '@/components/field-modes-editor';
 import { SpacePageShell } from '@/components/space-page-shell';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -36,6 +38,7 @@ type SpaceSettings = {
 type SpaceSettingsProps = PageProps & {
     space: SpaceSettings;
     themes: ThemeOption[];
+    fields: EditableField[];
 };
 
 type UpdateSpaceForm = {
@@ -45,6 +48,7 @@ type UpdateSpaceForm = {
     ask: string;
     theme: string;
     rating_enabled: boolean;
+    fields: Record<string, FieldMode>;
 };
 
 type FlashMessages = {
@@ -64,7 +68,11 @@ type SharedPageProps = {
  * derived server-side on a name change; the success flash lands the
  * user on the new URL.
  */
-export default function SpaceSettings({ space, themes }: SpaceSettingsProps) {
+export default function SpaceSettings({
+    space,
+    themes,
+    fields,
+}: SpaceSettingsProps) {
     const { flash } = usePage<SharedPageProps>().props;
     const { data, setData, patch, processing, errors } =
         useForm<UpdateSpaceForm>({
@@ -74,6 +82,7 @@ export default function SpaceSettings({ space, themes }: SpaceSettingsProps) {
             ask: space.ask,
             theme: space.theme,
             rating_enabled: space.rating_enabled,
+            fields: modesFrom(fields),
         });
 
     const submit = (event: React.FormEvent<HTMLFormElement>): void => {
@@ -223,6 +232,12 @@ export default function SpaceSettings({ space, themes }: SpaceSettingsProps) {
                         Let respondents include a 1–5 star rating
                     </Label>
                 </div>
+
+                <FieldModesEditor
+                    fields={fields}
+                    value={data.fields}
+                    onChange={(value) => setData('fields', value)}
+                />
 
                 <div className="grid gap-2">
                     <Label htmlFor="public_id">Public ID (embed snippet)</Label>

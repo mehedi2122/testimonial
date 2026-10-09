@@ -62,6 +62,13 @@ class TestimonialController extends Controller
         $this->assertScoped($space, $testimonial);
         Gate::authorize('moderate', $testimonial);
 
+        if (! $this->toggleWallOfLove->canPublish($testimonial)) {
+            return back()->with(
+                'error',
+                "This submitter didn't give permission to share their testimonial publicly, so it can't go on your wall of love.",
+            );
+        }
+
         $isOnWall = $this->toggleWallOfLove->toggle($testimonial);
 
         return back()->with(

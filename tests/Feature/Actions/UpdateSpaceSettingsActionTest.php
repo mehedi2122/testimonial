@@ -29,7 +29,7 @@ class UpdateSpaceSettingsActionTest extends TestCase
             'title' => 'Original title',
             'subtitle' => 'Original subtitle',
             'ask' => 'Original ask copy',
-            'theme' => SpaceTheme::MinimalLight,
+            'theme' => SpaceTheme::Minimal,
             'rating_enabled' => true,
         ]);
 
@@ -39,7 +39,7 @@ class UpdateSpaceSettingsActionTest extends TestCase
             'title' => 'New title',
             'subtitle' => 'New subtitle',
             'ask' => 'New ask copy',
-            'theme' => SpaceTheme::SoftColor->value,
+            'theme' => SpaceTheme::Clean->value,
             'rating_enabled' => false,
         ]);
 
@@ -48,7 +48,7 @@ class UpdateSpaceSettingsActionTest extends TestCase
         $this->assertSame('New title', $fresh->title);
         $this->assertSame('New subtitle', $fresh->subtitle);
         $this->assertSame('New ask copy', $fresh->ask);
-        $this->assertSame(SpaceTheme::SoftColor, $fresh->theme);
+        $this->assertSame(SpaceTheme::Clean, $fresh->theme);
         $this->assertFalse($fresh->rating_enabled);
     }
 
@@ -107,7 +107,7 @@ class UpdateSpaceSettingsActionTest extends TestCase
             'title' => 'New title only',
             'subtitle' => null,
             'ask' => 'New ask only',
-            'theme' => SpaceTheme::MinimalDark->value,
+            'theme' => SpaceTheme::Modern->value,
             'rating_enabled' => false,
         ]);
 

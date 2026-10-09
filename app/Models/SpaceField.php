@@ -53,11 +53,19 @@ class SpaceField extends Model
         'show_in_embed' => 'boolean',
     ];
 
-    /** Predefined field_keys seeded into every new Space at mode = 'off'. */
+    /**
+     * Predefined field_keys seeded into every new Space (PRD §8).
+     *
+     * Address is a PRD default field: on and required. It is private by
+     * default (`show_in_embed = false`) — a postal address has no place
+     * on a public wall unless the owner opts in. The optional fields
+     * start `off`.
+     */
     public const PREDEFINED_FIELDS = [
-        ['field_key' => 'company_name', 'label' => 'Company name', 'type' => SpaceFieldType::Text, 'sort_order' => 10],
-        ['field_key' => 'social_url', 'label' => 'Social profile URL', 'type' => SpaceFieldType::Url, 'sort_order' => 20],
-        ['field_key' => 'profile_photo', 'label' => 'Profile photo', 'type' => SpaceFieldType::Image, 'sort_order' => 30],
+        ['field_key' => 'address', 'label' => 'Address', 'type' => SpaceFieldType::Text, 'sort_order' => 5, 'mode' => SpaceFieldMode::Required, 'show_in_embed' => false],
+        ['field_key' => 'company_name', 'label' => 'Company name', 'type' => SpaceFieldType::Text, 'sort_order' => 10, 'mode' => SpaceFieldMode::Off, 'show_in_embed' => true],
+        ['field_key' => 'social_url', 'label' => 'Social profile URL', 'type' => SpaceFieldType::Url, 'sort_order' => 20, 'mode' => SpaceFieldMode::Off, 'show_in_embed' => true],
+        ['field_key' => 'profile_photo', 'label' => 'Profile photo', 'type' => SpaceFieldType::Image, 'sort_order' => 30, 'mode' => SpaceFieldMode::Off, 'show_in_embed' => true],
     ];
 
     /**

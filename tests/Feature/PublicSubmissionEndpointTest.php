@@ -113,23 +113,75 @@ it('does not require rating when the Space has rating_enabled false', function (
     $response->assertStatus(201);
 });
 
-it('rejects consent_given = false', function (): void {
+it('accepts consent_given = false and stores it (consent is optional, PRD §13)', function (): void {
     $space = SpaceModel::factory()->create();
 
     $payload = validPayload();
     $payload['consent_given'] = false;
 
-    $response = $this->postJson("/s/{$space->public_id}/submissions", $payload);
+    $this->postJson("/s/{$space->public_id}/submissions", $payload)->assertStatus(201);
 
-    $response->assertStatus(422);
-    $response->assertJsonValidationErrors(['consent_given']);
+    expect(Testimonial::query()->where('space_id', $space->id)->firstOrFail()->consent_given)->toBeFalse();
+});
+
+it('treats a missing consent_given as not consented', function (): void {
+    $space = SpaceModel::factory()->create();
+
+    $payload = validPayload();
+    unset($payload['consent_given']);
+
+    $this->postJson("/s/{$space->public_id}/submissions", $payload)->assertStatus(201);
+
+    expect(Testimonial::query()->where('space_id', $space->id)->firstOrFail()->consent_given)->toBeFalse();
+});
+
+it('rejects a submission missing a required field (Address)', function (): void {
+    $space = SpaceModel::factory()->create();
+
+    $payload = validPayload();
+    unset($payload['values']);
+
+    $this->postJson("/s/{$space->public_id}/submissions", $payload)
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['fields.address']);
+});
+
+it('rejects a required field sent with only whitespace', function (): void {
+    $space = SpaceModel::factory()->create();
+
+    $payload = validPayload();
+    $payload['values'] = [['field_key' => 'address', 'value' => '   ']];
+
+    $this->postJson("/s/{$space->public_id}/submissions", $payload)
+        ->assertStatus(422);
+});
+
+it('lets optional fields be omitted', function (): void {
+    $space = SpaceModel::factory()->create();
+    $space->fields()->where('field_key', 'company_name')->update(['mode' => 'optional']);
+
+    $this->postJson("/s/{$space->public_id}/submissions", validPayload())->assertStatus(201);
+});
+
+it('rejects a text value for an image field (photos are files only)', function (): void {
+    $space = SpaceModel::factory()->create();
+    $space->fields()->where('field_key', 'profile_photo')->update(['mode' => 'optional']);
+
+    $payload = validPayload();
+    $payload['values'][] = ['field_key' => 'profile_photo', 'value' => '../../.env'];
+
+    $this->postJson("/s/{$space->public_id}/submissions", $payload)
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['fields.profile_photo']);
 });
 
 it('accepts a values array with field_key + value entries', function (): void {
     $space = SpaceModel::factory()->create();
+    $space->fields()->whereIn('field_key', ['company_name', 'social_url'])->update(['mode' => 'optional']);
 
     $payload = validPayload();
     $payload['values'] = [
+        ['field_key' => 'address', 'value' => '1 Main St, Springfield'],
         ['field_key' => 'company_name', 'value' => 'Acme Corp'],
         ['field_key' => 'social_url', 'value' => 'https://example.com'],
     ];
@@ -296,9 +348,11 @@ it('persists a Testimonial row on success', function (): void {
 
 it('persists one TestimonialValue row per values entry', function (): void {
     $space = SpaceModel::factory()->create();
+    $space->fields()->whereIn('field_key', ['company_name', 'social_url'])->update(['mode' => 'optional']);
 
     $payload = validPayload();
     $payload['values'] = [
+        ['field_key' => 'address', 'value' => '1 Main St, Springfield'],
         ['field_key' => 'company_name', 'value' => 'Acme Corp'],
         ['field_key' => 'social_url', 'value' => 'https://example.com'],
     ];
@@ -306,12 +360,13 @@ it('persists one TestimonialValue row per values entry', function (): void {
     $this->postJson("/s/{$space->public_id}/submissions", $payload)->assertStatus(201);
 
     $testimonial = Testimonial::query()->where('space_id', $space->id)->firstOrFail();
-    expect($testimonial->values()->count())->toBe(2);
-    expect(TestimonialValue::query()->where('testimonial_id', $testimonial->id)->count())->toBe(2);
+    expect($testimonial->values()->count())->toBe(3);
+    expect(TestimonialValue::query()->where('testimonial_id', $testimonial->id)->count())->toBe(3);
 });
 
 it('rolls back when a TestimonialValue insert fails mid-transaction', function (): void {
     $space = SpaceModel::factory()->create();
+    $space->fields()->whereIn('field_key', ['company_name', 'social_url'])->update(['mode' => 'optional']);
 
     // Force the second insert (TestimonialValue) to throw. The transaction
     // wrapping the create() call must roll back the Testimonial row too.
@@ -321,6 +376,7 @@ it('rolls back when a TestimonialValue insert fails mid-transaction', function (
 
     $payload = validPayload();
     $payload['values'] = [
+        ['field_key' => 'address', 'value' => '1 Main St, Springfield'],
         ['field_key' => 'company_name', 'value' => 'Acme Corp'],
     ];
 
@@ -335,22 +391,24 @@ it('rolls back when a TestimonialValue insert fails mid-transaction', function (
 
 it('commits Testimonial + TestimonialValue[] together on success', function (): void {
     $space = SpaceModel::factory()->create();
+    $space->fields()->whereIn('field_key', ['company_name', 'social_url'])->update(['mode' => 'optional']);
 
     $payload = validPayload();
     $payload['values'] = [
+        ['field_key' => 'address', 'value' => '1 Main St, Springfield'],
         ['field_key' => 'company_name', 'value' => 'Acme Corp'],
     ];
 
     $this->postJson("/s/{$space->public_id}/submissions", $payload)->assertStatus(201);
 
     $testimonial = Testimonial::query()->where('space_id', $space->id)->firstOrFail();
-    expect($testimonial->values()->count())->toBe(1);
-    expect($testimonial->values()->first()->value)->toBe('Acme Corp');
+    expect($testimonial->values()->count())->toBe(2);
+    expect($testimonial->values()->pluck('value')->all())->toContain('Acme Corp');
 });
 
 // Group 9: is_wall_of_love + consent gate.
 
-it('persists is_wall_of_love when consent_given is true', function (): void {
+it('ignores is_wall_of_love from a submitter — only the owner publishes (PRD §17)', function (): void {
     $space = SpaceModel::factory()->create();
 
     $payload = validPayload();
@@ -359,8 +417,55 @@ it('persists is_wall_of_love when consent_given is true', function (): void {
     $this->postJson("/s/{$space->public_id}/submissions", $payload)->assertStatus(201);
 
     $testimonial = Testimonial::query()->where('space_id', $space->id)->firstOrFail();
-    expect($testimonial->is_wall_of_love)->toBeTrue();
+    expect($testimonial->is_wall_of_love)->toBeFalse();
     expect($testimonial->consent_given)->toBeTrue();
+    expect(Testimonial::query()->publiclyVisible()->count())->toBe(0);
+});
+
+it('rejects an answer for a field the owner turned off', function (): void {
+    $space = SpaceModel::factory()->create(); // social_url is off by default
+
+    $payload = validPayload();
+    $payload['values'][] = ['field_key' => 'social_url', 'value' => 'https://phish.example'];
+
+    $this->postJson("/s/{$space->public_id}/submissions", $payload)
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['fields.social_url']);
+});
+
+it('rejects the same field answered twice (422, not a 500)', function (): void {
+    $space = SpaceModel::factory()->create();
+
+    $payload = validPayload();
+    $payload['values'][] = ['field_key' => 'address', 'value' => 'Second address'];
+
+    $this->postJson("/s/{$space->public_id}/submissions", $payload)
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['fields.address']);
+});
+
+it('rejects javascript: and other non-web URLs', function (string $url): void {
+    $space = SpaceModel::factory()->create();
+    $space->fields()->where('field_key', 'social_url')->update(['mode' => 'optional']);
+
+    $payload = validPayload();
+    $payload['values'][] = ['field_key' => 'social_url', 'value' => $url];
+
+    $this->postJson("/s/{$space->public_id}/submissions", $payload)->assertStatus(422);
+})->with([
+    'javascript://x/%0Aalert(document.domain)',
+    'ftp://example.com/file',
+    'data://text/html,hi',
+]);
+
+it('accepts an https URL', function (): void {
+    $space = SpaceModel::factory()->create();
+    $space->fields()->where('field_key', 'social_url')->update(['mode' => 'optional']);
+
+    $payload = validPayload();
+    $payload['values'][] = ['field_key' => 'social_url', 'value' => 'https://example.com/priya'];
+
+    $this->postJson("/s/{$space->public_id}/submissions", $payload)->assertStatus(201);
 });
 
 it('defaults is_wall_of_love to false when not supplied', function (): void {
@@ -402,5 +507,9 @@ function validPayload(): array
         'testimonial' => 'Acme saved us hours every week.',
         'rating' => 5,
         'consent_given' => true,
+        // New Spaces seed Address as a required field (PRD §8).
+        'values' => [
+            ['field_key' => 'address', 'value' => '1 Main St, Springfield'],
+        ],
     ];
 }

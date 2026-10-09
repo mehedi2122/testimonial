@@ -7,7 +7,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-@theme {
+@theme inline {
     --font-sans:
         'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
@@ -140,4 +140,79 @@
     body {
         @apply bg-background text-foreground;
     }
+}
+
+/*
+ * Public-page themes (PRD §10). Applied to the full-page wrapper of
+ * /s/{public_id} and /wall/{slug}. Each theme redefines the shadcn
+ * color tokens inside its scope, so every component on the page picks
+ * it up — and the owner's light/dark appearance setting never leaks
+ * onto a respondent's screen.
+ */
+.space-theme-minimal {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.15 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.15 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.15 0 0);
+    --primary: oklch(0.15 0 0);
+    --primary-foreground: oklch(0.99 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.5 0 0);
+    --accent: oklch(0.96 0 0);
+    --accent-foreground: oklch(0.15 0 0);
+    --border: oklch(0.9 0 0);
+    --input: oklch(0.85 0 0);
+    --ring: oklch(0.6 0 0);
+    --sidebar-border: oklch(0.9 0 0);
+    --radius: 0.25rem;
+    color-scheme: light;
+}
+
+.space-theme-modern {
+    --background: oklch(0.17 0.02 275);
+    --foreground: oklch(0.97 0.005 275);
+    --card: oklch(0.22 0.03 275);
+    --card-foreground: oklch(0.97 0.005 275);
+    --popover: oklch(0.22 0.03 275);
+    --popover-foreground: oklch(0.97 0.005 275);
+    --primary: oklch(0.68 0.19 290);
+    --primary-foreground: oklch(0.15 0.02 275);
+    --muted: oklch(0.26 0.03 275);
+    --muted-foreground: oklch(0.74 0.03 275);
+    --accent: oklch(0.28 0.04 275);
+    --accent-foreground: oklch(0.97 0.005 275);
+    --border: oklch(0.32 0.04 275);
+    --input: oklch(0.36 0.04 275);
+    --ring: oklch(0.68 0.19 290);
+    --sidebar-border: oklch(0.32 0.04 275);
+    --radius: 0.75rem;
+    color-scheme: dark;
+}
+
+.space-theme-clean {
+    --background: oklch(0.975 0.012 230);
+    --foreground: oklch(0.27 0.03 245);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.27 0.03 245);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.27 0.03 245);
+    --primary: oklch(0.58 0.13 235);
+    --primary-foreground: oklch(0.99 0 0);
+    --muted: oklch(0.95 0.015 230);
+    --muted-foreground: oklch(0.52 0.03 245);
+    --accent: oklch(0.94 0.03 230);
+    --accent-foreground: oklch(0.27 0.03 245);
+    --border: oklch(0.91 0.02 230);
+    --input: oklch(0.88 0.02 230);
+    --ring: oklch(0.58 0.13 235);
+    --sidebar-border: oklch(0.91 0.02 230);
+    --radius: 1rem;
+    color-scheme: light;
+}
+
+.space-theme-clean [data-slot='card'],
+.space-theme-clean form {
+    box-shadow: 0 8px 24px -12px oklch(0.4 0.08 240 / 0.25);
 }

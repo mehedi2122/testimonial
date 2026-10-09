@@ -1,6 +1,6 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, Check, Copy, LoaderCircle } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeft, LoaderCircle } from 'lucide-react';
+import { CopyButton } from '@/components/copy-button';
 import { SpacePageShell } from '@/components/space-page-shell';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,7 @@ type FieldRow = {
 type PreviewTestimonialValue = {
     field_key: string | null;
     label: string | null;
+    type: string | null;
     value: string | null;
 };
 
@@ -176,7 +177,10 @@ export default function SpaceEmbed({
                     </Alert>
                 )}
 
-                <form onSubmit={submit} className="grid gap-6 lg:grid-cols-2">
+                <form
+                    onSubmit={submit}
+                    className="grid min-w-0 gap-6 lg:grid-cols-2 [&>*]:min-w-0"
+                >
                     <div className="flex flex-col gap-6">
                         <div className="rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border">
                             <h2 className="text-sm font-medium">Layout</h2>
@@ -526,6 +530,13 @@ function PreviewCard({
         .map((part) => part.charAt(0).toUpperCase())
         .slice(0, 2)
         .join('');
+    const photo = testimonial.values.find(
+        (v) =>
+            v.type === 'image' &&
+            v.value &&
+            v.field_key !== null &&
+            fieldVisibility[v.field_key],
+    );
 
     return (
         <article
@@ -536,15 +547,23 @@ function PreviewCard({
             }`}
         >
             <div className="flex items-center gap-2">
-                <span
-                    className={`flex size-7 items-center justify-center rounded-full text-[10px] font-medium ${
-                        dark
-                            ? 'bg-zinc-700 text-zinc-200'
-                            : 'bg-muted text-muted-foreground'
-                    }`}
-                >
-                    {initials || '?'}
-                </span>
+                {photo?.value ? (
+                    <img
+                        src={photo.value}
+                        alt=""
+                        className="size-7 rounded-full object-cover"
+                    />
+                ) : (
+                    <span
+                        className={`flex size-7 items-center justify-center rounded-full text-[10px] font-medium ${
+                            dark
+                                ? 'bg-zinc-700 text-zinc-200'
+                                : 'bg-muted text-muted-foreground'
+                        }`}
+                    >
+                        {initials || '?'}
+                    </span>
+                )}
                 <span className="font-medium">{testimonial.name}</span>
             </div>
             {showRating && testimonial.rating !== null && (
@@ -576,7 +595,7 @@ function PreviewCard({
                             const v = testimonial.values.find(
                                 (val) => val.field_key === f.key,
                             );
-                            if (!v || !v.value) {
+                            if (!v || !v.value || v.type === 'image') {
                                 return null;
                             }
                             return (
@@ -608,59 +627,18 @@ type EmbedCodeCardProps = {
 };
 
 function EmbedCodeCard({ snippet }: EmbedCodeCardProps) {
-    const [copied, setCopied] = useState(false);
-
-    const copy = async (): Promise<void> => {
-        try {
-            if (navigator.clipboard?.writeText) {
-                await navigator.clipboard.writeText(snippet);
-            } else {
-                const textarea = document.createElement('textarea');
-                textarea.value = snippet;
-                textarea.style.position = 'fixed';
-                textarea.style.opacity = '0';
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-            }
-            setCopied(true);
-            window.setTimeout(() => setCopied(false), 2000);
-        } catch {
-            // Silently no-op — the snippet is still visible in the <pre>
-            // below, so the owner can still copy manually.
-        }
-    };
-
     return (
         <div className="rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border">
             <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-sm font-medium">Embed code</h2>
-                <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={copy}
-                >
-                    {copied ? (
-                        <>
-                            <Check className="size-4" />
-                            Copied
-                        </>
-                    ) : (
-                        <>
-                            <Copy className="size-4" />
-                            Copy
-                        </>
-                    )}
-                </Button>
+                <CopyButton value={snippet} />
             </div>
             <pre className="overflow-x-auto rounded-md bg-muted p-3 font-mono text-xs leading-relaxed">
                 <code>{snippet}</code>
             </pre>
             <p className="mt-2 text-xs text-muted-foreground">
-                Paste this on your site. The embed widget that reads these
-                attributes ships in a future release.
+                Paste this into any page on your site. Save your settings first
+                — the widget reads the saved configuration.
             </p>
         </div>
     );

@@ -1,7 +1,8 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { Star } from 'lucide-react';
 import { SpacePageShell } from '@/components/space-page-shell';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import {
     Card,
     CardContent,
@@ -94,6 +95,11 @@ export default function SpaceDashboard({
                             {analytics.live_count} of {analytics.plan_limit}{' '}
                             testimonials collected. Upgrade to Pro to collect up
                             to 1,000 per Space.
+                            <Button asChild size="sm" className="mt-2">
+                                <Link href="/billing" prefetch>
+                                    Upgrade to Pro
+                                </Link>
+                            </Button>
                         </AlertDescription>
                     </Alert>
                 )}

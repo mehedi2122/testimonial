@@ -29,4 +29,13 @@ enum Plan: string
             self::Pro => 1000,
         };
     }
+
+    /** PRD §25 copy shown when Space creation hits the cap. */
+    public function spaceLimitMessage(): string
+    {
+        return match ($this) {
+            self::Free => "You've reached the Free plan limit. Upgrade to Pro to create more Spaces.",
+            self::Pro => "You've reached the Pro plan limit of {$this->maxSpaces()} Spaces.",
+        };
+    }
 }

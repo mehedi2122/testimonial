@@ -80,6 +80,15 @@ class SubmissionValue implements ValidationRule
 
         if (filter_var($value, FILTER_VALIDATE_URL) === false) {
             $fail('The value must be a valid URL.');
+
+            return;
+        }
+
+        // FILTER_VALIDATE_URL accepts `javascript://…` and `data:`; these
+        // are rendered as links on public pages, so only web URLs pass.
+        $scheme = strtolower((string) parse_url($value, PHP_URL_SCHEME));
+        if (! in_array($scheme, ['http', 'https'], true)) {
+            $fail('The URL must start with http:// or https://.');
         }
     }
 

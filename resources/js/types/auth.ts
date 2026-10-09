@@ -1,3 +1,10 @@
+/** A Space as shared on every page (sidebar, switcher). */
+export type SpaceSummary = {
+    id: number;
+    slug: string;
+    name: string;
+};
+
 export type User = {
     id: number;
     name: string;
@@ -7,6 +14,7 @@ export type User = {
     two_factor_enabled?: boolean;
     created_at: string;
     updated_at: string;
+    spaces?: SpaceSummary[];
     [key: string]: unknown;
 };
 

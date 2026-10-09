@@ -34,11 +34,11 @@ class SpaceCrudTest extends TestCase
         $response->assertInertia(fn ($page) => $page
             ->component('spaces/create')
             ->has('themes', 3)
-            ->where('themes.0.value', SpaceTheme::MinimalLight->value)
+            ->where('themes.0.value', SpaceTheme::Minimal->value)
         );
     }
 
-    public function test_store_creates_space_and_redirects_to_dashboard(): void
+    public function test_store_creates_space_and_redirects_to_success_page(): void
     {
         $user = User::factory()->create();
 
@@ -47,18 +47,17 @@ class SpaceCrudTest extends TestCase
             'title' => 'What people say',
             'subtitle' => null,
             'ask' => 'Tell us about your experience',
-            'theme' => SpaceTheme::MinimalDark->value,
+            'theme' => SpaceTheme::Modern->value,
             'rating_enabled' => true,
         ]);
 
-        $response->assertRedirect(route('spaces.dashboard', ['space' => 'shiplog-reviews'], absolute: false));
-        $response->assertSessionHas('success');
+        $response->assertRedirect(route('spaces.created', ['space' => 'shiplog-reviews'], absolute: false));
 
         $space = $user->spaces()->first();
         $this->assertNotNull($space);
         $this->assertSame('Shiplog Reviews', $space->name);
         $this->assertSame('shiplog-reviews', $space->slug);
-        $this->assertSame(SpaceTheme::MinimalDark, $space->theme);
+        $this->assertSame(SpaceTheme::Modern, $space->theme);
     }
 
     public function test_store_redirects_to_index_with_error_at_plan_cap(): void
@@ -70,7 +69,7 @@ class SpaceCrudTest extends TestCase
             'name' => 'One More',
             'title' => 'New Space',
             'ask' => 'Tell us about it',
-            'theme' => SpaceTheme::MinimalLight->value,
+            'theme' => SpaceTheme::Minimal->value,
             'rating_enabled' => true,
         ]);
 
@@ -157,5 +156,103 @@ class SpaceCrudTest extends TestCase
     {
         $this->get(route('spaces.create'))->assertRedirect(route('login'));
         $this->get(route('spaces.index'))->assertRedirect(route('login'));
+    }
+
+    public function test_success_page_shows_the_public_link(): void
+    {
+        $user = User::factory()->create();
+        $space = Space::factory()->for($user)->create();
+
+        $this->actingAs($user)
+            ->get(route('spaces.created', ['space' => $space->slug]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('spaces/created')
+                ->where('space.slug', $space->slug)
+                ->where('space.name', $space->name)
+                ->where('public_url', route('public.submissions.show', ['public_id' => $space->public_id]))
+                ->where('wall_url', route('public.wall.show', ['slug' => $space->slug]))
+            );
+    }
+
+    public function test_success_page_public_link_opens_the_submission_form(): void
+    {
+        $user = User::factory()->create();
+        $space = Space::factory()->for($user)->create();
+
+        $this->get($space->publicSubmissionUrl())->assertOk();
+    }
+
+    public function test_success_page_returns_403_for_non_owner(): void
+    {
+        $space = Space::factory()->for(User::factory())->create();
+
+        $this->actingAs(User::factory()->create())
+            ->get(route('spaces.created', ['space' => $space->slug]))
+            ->assertForbidden();
+    }
+
+    public function test_success_page_requires_login(): void
+    {
+        $space = Space::factory()->for(User::factory())->create();
+
+        $this->get(route('spaces.created', ['space' => $space->slug]))
+            ->assertRedirect(route('login'));
+    }
+
+    public function test_inbox_links_to_the_public_submission_form(): void
+    {
+        $user = User::factory()->create();
+        $space = Space::factory()->for($user)->create();
+
+        $this->actingAs($user)
+            ->get(route('spaces.inbox', ['space' => $space->slug]))
+            ->assertInertia(fn ($page) => $page
+                ->where('public_url', route('public.submissions.show', ['public_id' => $space->public_id]))
+            );
+    }
+
+    public function test_store_applies_field_modes_chosen_on_the_create_form(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('spaces.store'), [
+            'name' => 'Field Config',
+            'title' => 'Tell us',
+            'ask' => 'How was it for you?',
+            'theme' => SpaceTheme::Modern->value,
+            'rating_enabled' => false,
+            'fields' => ['address' => 'off', 'profile_photo' => 'required'],
+        ])->assertRedirect();
+
+        $space = $user->spaces()->firstOrFail();
+        $modes = $space->fields()->pluck('mode', 'field_key')->map->value->all();
+        $this->assertSame('off', $modes['address']);
+        $this->assertSame('required', $modes['profile_photo']);
+    }
+
+    public function test_create_page_offers_predefined_fields_with_defaults(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->get(route('spaces.create'))
+            ->assertInertia(fn ($page) => $page
+                ->has('fields', 4)
+                ->where('fields.0.field_key', 'address')
+                ->where('fields.0.mode', 'required')
+            );
+    }
+
+    public function test_shared_user_props_are_an_allowlist(): void
+    {
+        $user = User::factory()->create();
+        $user->forceFill(['stripe_id' => 'cus_secret', 'pm_last_four' => '4242'])->save();
+
+        $this->actingAs($user)
+            ->get(route('spaces.index'))
+            ->assertInertia(fn ($page) => $page
+                ->where('auth.user.id', $user->id)
+                ->missing('auth.user.stripe_id')
+                ->missing('auth.user.pm_last_four')
+            );
     }
 }

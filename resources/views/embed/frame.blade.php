@@ -17,7 +17,7 @@
  */
 ?>
 <!DOCTYPE html>
-<html lang="en" @if($dark_mode) data-theme="dark" @endif @if($background_color) style="background-color: {{ $background_color }};" @endif>
+<html lang="en" @if($dark_mode) data-theme="dark" @endif @unless($animation_enabled) class="no-animation" @endunless @if($background_color) style="--bg: {{ $background_color }};" @endif>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -101,6 +101,7 @@
         @media (prefers-reduced-motion: reduce) {
             .card { animation: none; opacity: 1; transform: none; }
         }
+        .no-animation .card { animation: none; opacity: 1; transform: none; }
         .card-head {
             display: flex;
             align-items: center;
@@ -118,6 +119,10 @@
             font-size: 12px;
             font-weight: 600;
             flex-shrink: 0;
+        }
+        .avatar-photo {
+            object-fit: cover;
+            padding: 0;
         }
         .name {
             font-weight: 600;
@@ -183,9 +188,13 @@
             @foreach($testimonials as $t)
                 <article class="card">
                     <div class="card-head">
-                        <span class="avatar" aria-hidden="true">
-                            {{ mb_strtoupper(mb_substr($t['name'] ?? '?', 0, 1)) }}
-                        </span>
+                        @if(!empty($t['photo_url']))
+                            <img class="avatar avatar-photo" src="{{ $t['photo_url'] }}" alt="" loading="lazy">
+                        @else
+                            <span class="avatar" aria-hidden="true">
+                                {{ mb_strtoupper(mb_substr($t['name'] ?? '?', 0, 1)) }}
+                            </span>
+                        @endif
                         <span class="name">{{ $t['name'] }}</span>
                     </div>
 
@@ -215,5 +224,28 @@
             @endforeach
         </div>
     @endif
+
+    <script>
+        // Report the document height to the loader (public/embed.js) so the
+        // host page can size the iframe to its content instead of clipping it.
+        (function () {
+            if (window.parent === window) { return; }
+            var last = 0;
+            function report() {
+                // Measure <body>, not documentElement: scrollHeight never
+                // reports less than the iframe's current height, so the
+                // frame could grow but never shrink to fit short content.
+                var h = Math.ceil(document.body.getBoundingClientRect().height);
+                if (h === last) { return; }
+                last = h;
+                window.parent.postMessage({ type: 'testimonial-embed:resize', height: h }, '*');
+            }
+            if (window.ResizeObserver) {
+                new ResizeObserver(report).observe(document.body);
+            }
+            window.addEventListener('load', report);
+            report();
+        })();
+    </script>
 </body>
 </html>

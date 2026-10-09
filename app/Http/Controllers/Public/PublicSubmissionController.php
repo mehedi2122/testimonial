@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Public;
 
+use App\Actions\Photos\StoreTestimonialPhotoAction;
 use App\Actions\Public\ShowPublicSubmissionAction;
 use App\Actions\SubmitTestimonialAction;
 use App\Enums\SpaceFieldMode;
+use App\Exceptions\UnreadablePhotoException;
 use App\Http\Requests\SubmitTestimonialRequest;
 use App\Models\SpaceField;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 /**
  * Public testimonial submission endpoint (OpenSpec change: public-testimonial-submission).
@@ -78,7 +82,7 @@ class PublicSubmissionController extends Controller
      * the SoftDeletes preflight (group 6), so by the time we reach this method the Space
      * is guaranteed to exist and not be soft-deleted.
      */
-    public function store(SubmitTestimonialRequest $request): JsonResponse
+    public function store(SubmitTestimonialRequest $request, StoreTestimonialPhotoAction $photoAction): JsonResponse
     {
         try {
             $space = $request->space();
@@ -111,7 +115,27 @@ class PublicSubmissionController extends Controller
             ], 422);
         }
 
-        $testimonial = $this->action->create($space, $payload);
+        // Photos are re-encoded and written before the DB transaction; if
+        // anything after that fails, the orphaned files are removed.
+        $photoPaths = [];
+        try {
+            foreach ($request->photoFiles() as $fieldKey => $file) {
+                $photoPaths[(string) $fieldKey] = $photoAction->store($space, $file);
+            }
+
+            $testimonial = $this->action->create($space, $payload, $photoPaths);
+        } catch (UnreadablePhotoException) {
+            Storage::disk('local')->delete(array_values($photoPaths));
+
+            return response()->json([
+                'message' => "We couldn't read that photo. Try a different image.",
+                'errors' => ['photos' => ["We couldn't read that photo. Try a different image."]],
+            ], 422);
+        } catch (Throwable $e) {
+            Storage::disk('local')->delete(array_values($photoPaths));
+
+            throw $e;
+        }
 
         return response()->json([
             'ok' => true,

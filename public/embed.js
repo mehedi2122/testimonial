@@ -11,6 +11,8 @@
  *      The data-* attributes on the original div are passed through
  *      as query string so the iframe can override the saved config
  *      per instance.
+ *   4. Listens for `testimonial-embed:resize` messages from the frame
+ *      and sizes each iframe to its content height (no clipping).
  *
  * The iframe URL is content-hashed via `?v=` (the snippet generator
  * writes a date-based version). The HTTP response carries a long
@@ -53,6 +55,11 @@
         qs.set('limit', val(node, 'data-limit', '12'));
         qs.set('show-rating', val(node, 'data-show-rating', '1'));
 
+        var animation = val(node, 'data-animation', '');
+        if (animation) {
+            qs.set('animation', animation);
+        }
+
         var bg = val(node, 'data-bg', '');
         if (bg) {
             qs.set('bg', bg);
@@ -76,6 +83,7 @@
         var iframe = document.createElement('iframe');
         iframe.src = src;
         iframe.title = 'Testimonials';
+        iframe.setAttribute('data-testimonial-embed', '');
         iframe.loading = 'lazy';
         iframe.setAttribute('scrolling', 'no');
         iframe.style.width = '100%';
@@ -86,6 +94,32 @@
 
         node.replaceWith(iframe);
     }
+
+    // Only trust height messages from our own origin and from one of the
+    // iframes this loader mounted.
+    window.addEventListener('message', function (event) {
+        var data = event.data;
+        if (!data || data.type !== 'testimonial-embed:resize') {
+            return;
+        }
+        if (ORIGIN && event.origin !== ORIGIN) {
+            return;
+        }
+        var height = parseInt(data.height, 10);
+        if (!(height > 0)) {
+            return;
+        }
+
+        var frames = document.querySelectorAll(
+            'iframe[data-testimonial-embed]',
+        );
+        for (var i = 0; i < frames.length; i++) {
+            if (frames[i].contentWindow === event.source) {
+                frames[i].style.height = height + 'px';
+                return;
+            }
+        }
+    });
 
     function init() {
         var nodes = document.querySelectorAll('[data-testimonial-space]');

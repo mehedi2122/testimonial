@@ -49,7 +49,14 @@ return [
     'webhook' => [
         'secret' => env('STRIPE_WEBHOOK_SECRET'),
         'tolerance' => env('STRIPE_WEBHOOK_TOLERANCE', 300),
-        'events' => WebhookCommand::DEFAULT_EVENTS,
+        // Cashier's defaults plus the two events
+        // App\Http\Controllers\Billing\StripeWebhookController handles
+        // itself (PRD §28).
+        'events' => [
+            ...WebhookCommand::DEFAULT_EVENTS,
+            'checkout.session.completed',
+            'invoice.payment_failed',
+        ],
     ],
 
     /*

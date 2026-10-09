@@ -24,8 +24,12 @@ use App\Models\Space;
  *        data-theme="{light|dark}"
  *        data-bg="{#RRGGBB or absent}"
  *        data-limit="{item_limit}"
- *        data-show-rating="{0|1}"></div>
- *   <script src="{origin}/embed.js" defer></script>
+ *        data-show-rating="{0|1}"
+ *        data-animation="{0|1}"></div>
+ *   <script src="{origin}/embed.js?v={mtime}" defer></script>
+ *
+ * `?v=` is the loader file's mtime: /embed.js is served with a one-year
+ * Cache-Control, so the version busts host-page caches when it changes.
  *
  * `data-bg` is omitted entirely when `background_color` is null — no
  * `data-bg=""` left behind for the future `embed-widget` to special-case.
@@ -44,6 +48,7 @@ class EmbedSnippet
             'data-theme' => $config->dark_mode ? 'dark' : 'light',
             'data-limit' => (string) $config->item_limit,
             'data-show-rating' => $config->show_rating ? '1' : '0',
+            'data-animation' => $config->animation_enabled ? '1' : '0',
         ];
 
         if ($config->background_color !== null) {
@@ -51,7 +56,7 @@ class EmbedSnippet
         }
 
         $div = '<div '.self::renderAttributes($attributes).'></div>';
-        $script = '<script src="'.self::origin().'/embed.js" defer></script>';
+        $script = '<script src="'.self::origin().'/embed.js?v='.self::loaderVersion().'" defer></script>';
 
         return $div."\n".$script;
     }
@@ -67,6 +72,13 @@ class EmbedSnippet
         }
 
         return implode(' ', $parts);
+    }
+
+    private static function loaderVersion(): string
+    {
+        $mtime = @filemtime(public_path('embed.js'));
+
+        return $mtime === false ? '1' : (string) $mtime;
     }
 
     /**

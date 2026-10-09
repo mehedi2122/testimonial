@@ -100,12 +100,11 @@ class InboxActionTest extends TestCase
         ]);
 
         $this->assertSame(5, $updated->rating);
-        // Sanitization is htmlspecialchars() — script tags become literal
-        // text. We test that "<script" no longer appears.
+        // Tags are stripped and the text is stored plain — renderers escape
+        // on output, so entities here would show up as "&amp;" on screen.
         $fresh = $updated->fresh();
-        $this->assertStringNotContainsString('<script', $fresh->name);
-        $this->assertStringContainsString('&lt;', $fresh->name);
-        $this->assertStringNotContainsString('<b>', $fresh->testimonial);
+        $this->assertSame('alert("x")Alice', $fresh->name);
+        $this->assertSame('Hello world & "quoted" copy.', $fresh->testimonial);
     }
 
     public function test_update_accepts_null_rating(): void

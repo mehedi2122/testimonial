@@ -28,6 +28,12 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // Pro plan price (PRD §24, $9.99/month). Plan limits live in
+    // App\Enums\Plan; only the Stripe price id is configuration.
+    'stripe' => [
+        'pro_price' => env('STRIPE_PRICE_PRO'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

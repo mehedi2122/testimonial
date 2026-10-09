@@ -45,7 +45,8 @@ class PublicSubmissionFormTest extends TestCase
     {
         $user = User::factory()->create();
         $space = Space::factory()->for($user)->create();
-        // Promote only company_name; leave social_url and profile_photo Off.
+        // Promote company_name; social_url and profile_photo stay Off.
+        // Address is seeded on (required).
         $space->fields()->where('field_key', 'company_name')->update([
             'mode' => SpaceFieldMode::Optional,
         ]);
@@ -55,7 +56,7 @@ class PublicSubmissionFormTest extends TestCase
         $response->assertInertia(fn ($page) => $page
             ->where('fields', fn ($fields) => collect($fields)
                 ->pluck('field_key')
-                ->all() === ['company_name']
+                ->all() === ['address', 'company_name']
             )
         );
     }

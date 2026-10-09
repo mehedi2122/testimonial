@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Resources;
 
 use App\Actions\Embeds\BuildEmbedWidgetPayloadAction;
+use App\Actions\Photos\StoreTestimonialPhotoAction;
+use App\Enums\SpaceFieldType;
 use App\Models\Testimonial;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -45,7 +47,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class EmbedTestimonialResource extends JsonResource
 {
     /**
-     * @return array{id: int, name: string, testimonial: string, rating: int|null, submitted_at: string|null, is_favorite: bool, fields: array<int, array{label: string, value: string, type: string}>}
+     * @return array{id: int, name: string, testimonial: string, rating: int|null, submitted_at: string|null, is_favorite: bool, photo_url: string|null, fields: array<int, array{label: string, value: string, type: string}>}
      */
     public function toArray($request): array
     {
@@ -56,6 +58,7 @@ class EmbedTestimonialResource extends JsonResource
             'rating' => $this->resource->rating,
             'submitted_at' => $this->resource->submitted_at->toIso8601String(),
             'is_favorite' => (bool) $this->resource->is_favorite,
+            'photo_url' => $this->photoUrl(),
             'fields' => $this->resource->values
                 ->map(function ($value): ?array {
                     $field = $value->spaceField;
@@ -72,6 +75,11 @@ class EmbedTestimonialResource extends JsonResource
                         return null;
                     }
 
+                    // Photos render as the avatar (photo_url), not a text row.
+                    if ($field->type === SpaceFieldType::Image) {
+                        return null;
+                    }
+
                     return [
                         'label' => $field->label,
                         'value' => (string) ($value->value ?? ''),
@@ -82,5 +90,28 @@ class EmbedTestimonialResource extends JsonResource
                 ->values()
                 ->all(),
         ];
+    }
+
+    /**
+     * URL of the first visible, server-stored profile photo, or null.
+     * Served by TestimonialPhotoController, which re-checks visibility.
+     */
+    private function photoUrl(): ?string
+    {
+        foreach ($this->resource->values as $value) {
+            $field = $value->spaceField;
+
+            if (
+                $field !== null
+                && $field->deleted_at === null
+                && $field->show_in_embed
+                && $field->type === SpaceFieldType::Image
+                && StoreTestimonialPhotoAction::isStoredPath($value->value)
+            ) {
+                return route('photos.show', ['value' => $value->id]);
+            }
+        }
+
+        return null;
     }
 }

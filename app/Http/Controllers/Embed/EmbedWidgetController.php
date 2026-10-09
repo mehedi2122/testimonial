@@ -30,7 +30,7 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
  * 19).
  *
  * Per-instance overrides via query string let the loader pass
- * `?style=&theme=&limit=&show-rating=&bg=` to override the saved
+ * `?style=&theme=&limit=&show-rating=&animation=&bg=` to override the saved
  * config. This is forward-looking — today the loader passes them
  * faithfully, but a future change could swap layout/theme at runtime
  * on the host page without re-pasting the snippet.
@@ -45,6 +45,7 @@ class EmbedWidgetController extends Controller
      *   - theme: 'light' | 'dark' (fallback to saved)
      *   - limit: positive integer (fallback to saved, then clamped)
      *   - show-rating: '0' | '1' (fallback to saved)
+     *   - animation: '0' | '1' (fallback to saved)
      *   - bg: #RRGGBB (fallback to saved)
      *
      * Unknown values fall back silently — never error to the host.
@@ -107,6 +108,11 @@ class EmbedWidgetController extends Controller
         $showRating = $request->query('show-rating');
         if ($showRating === '0' || $showRating === '1') {
             $payload['show_rating'] = $showRating === '1';
+        }
+
+        $animation = $request->query('animation');
+        if ($animation === '0' || $animation === '1') {
+            $payload['animation_enabled'] = $animation === '1';
         }
 
         $limit = $request->query('limit');

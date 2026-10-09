@@ -1,11 +1,15 @@
 <?php
 
+use App\Http\Controllers\Billing\BillingController;
+use App\Http\Controllers\Billing\StripeWebhookController;
 use App\Http\Controllers\Embed\EmbedWidgetController;
 use App\Http\Controllers\Public\PublicSubmissionController;
 use App\Http\Controllers\Public\PublicWallController;
+use App\Http\Controllers\Public\TestimonialPhotoController;
 use App\Http\Controllers\Spaces\SpaceController;
 use App\Http\Controllers\Spaces\TestimonialController;
 use Illuminate\Support\Facades\Route;
+use Laravel\Cashier\Http\Controllers\PaymentController;
 
 Route::inertia('/', 'welcome')->name('home');
 
@@ -19,6 +23,8 @@ Route::middleware(['auth', 'verified'])->prefix('spaces')->name('spaces.')->grou
     Route::post('/', [SpaceController::class, 'store'])->name('store');
     Route::delete('/{space}', [SpaceController::class, 'destroy'])->name('destroy');
 
+    Route::get('/{space}/created', [SpaceController::class, 'created'])
+        ->name('created');
     Route::get('/{space}/dashboard', [SpaceController::class, 'dashboard'])
         ->name('dashboard');
     Route::get('/{space}/inbox', [SpaceController::class, 'inbox'])
@@ -71,6 +77,14 @@ Route::get('embed/{publicId}', [EmbedWidgetController::class, 'frame'])
     ->name('embed.frame')
     ->where('publicId', '[A-Za-z0-9]+');
 
+// Profile photos (OpenSpec: public-submission-fixes). Private disk;
+// visibility checked per request (owner, or public testimonial with the
+// photo field shown on embeds). The web group's session makes the owner
+// check work for the inbox.
+Route::get('photos/{value}', [TestimonialPhotoController::class, 'show'])
+    ->whereNumber('value')
+    ->name('photos.show');
+
 // Public Wall of Love page (OpenSpec: public-wall-of-love). Auth-free
 // GET — the page is the owner-shared marketing surface (Twitter,
 // LinkedIn, email signatures), so the routing key is `slug` (human
@@ -78,5 +92,22 @@ Route::get('embed/{publicId}', [EmbedWidgetController::class, 'frame'])
 // the embed. No throttle — read-only, low traffic.
 Route::get('wall/{slug}', [PublicWallController::class, 'show'])
     ->name('public.wall.show');
+
+// Billing (OpenSpec: billing, PRD §24-§28). Checkout and portal both
+// hand the browser to Stripe; the plan only changes via the webhook.
+Route::middleware(['auth', 'verified'])->prefix('billing')->name('billing.')->group(function () {
+    Route::get('/', [BillingController::class, 'show'])->name('show');
+    Route::post('/checkout', [BillingController::class, 'checkout'])->name('checkout');
+    Route::post('/portal', [BillingController::class, 'portal'])->name('portal');
+});
+
+// Cashier's routes, re-registered (AppServiceProvider calls
+// Cashier::ignoreRoutes()) so the webhook resolves to our subclass.
+// Same prefix and names Cashier would use; the webhook is CSRF-exempt
+// in bootstrap/app.php and signature-verified by the controller.
+Route::prefix(config('cashier.path'))->name('cashier.')->group(function () {
+    Route::get('payment/{id}', [PaymentController::class, 'show'])->name('payment');
+    Route::post('webhook', [StripeWebhookController::class, 'handleWebhook'])->name('webhook');
+});
 
 require __DIR__.'/settings.php';

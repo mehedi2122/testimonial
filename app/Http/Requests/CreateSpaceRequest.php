@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\SpaceFieldMode;
 use App\Enums\SpaceTheme;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -38,6 +39,9 @@ class CreateSpaceRequest extends FormRequest
             'ask' => ['required', 'string', 'min:5', 'max:500'],
             'theme' => ['required', Rule::enum(SpaceTheme::class)],
             'rating_enabled' => ['required', 'boolean'],
+            // PRD §8 field configuration: field_key => off|optional|required.
+            'fields' => ['sometimes', 'array'],
+            'fields.*' => [Rule::enum(SpaceFieldMode::class)],
         ];
     }
 

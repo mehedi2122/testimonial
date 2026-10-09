@@ -16,10 +16,20 @@ use App\Models\Testimonial;
  * generated column on MySQL) so `is_public` stays truthful — no
  * extra refresh needed.
  *
+ * Data-model §15: a testimonial without sharing consent can never be
+ * public, so turning the flag ON for one is refused (`canPublish()`)
+ * rather than allowed as a toggle that silently does nothing. Turning
+ * it OFF is always allowed.
+ *
  * SRP: one method, one mutation. Returns the new state.
  */
 class ToggleWallOfLoveAction
 {
+    public function canPublish(Testimonial $testimonial): bool
+    {
+        return $testimonial->is_wall_of_love || $testimonial->consent_given;
+    }
+
     public function toggle(Testimonial $testimonial): bool
     {
         $testimonial->is_wall_of_love = ! $testimonial->is_wall_of_love;

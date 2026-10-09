@@ -1,17 +1,19 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     Eye,
     EyeOff,
     Heart,
+    MoreHorizontal,
     Pencil,
+    ShieldOff,
     Star,
     Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
 import { SpacePageShell } from '@/components/space-page-shell';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,6 +24,13 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { PageProps } from '@/types';
@@ -41,12 +50,15 @@ type Testimonial = {
     is_favorite: boolean;
     is_wall_of_love: boolean;
     is_hidden: boolean;
+    consent_given: boolean;
     submitted_at: string | null;
+    photo_url: string | null;
     values: TestimonialValue[];
 };
 
 type SpaceInboxProps = PageProps & {
     space: { id: number; slug: string; name: string };
+    public_url: string;
     testimonials: Testimonial[];
     live_count: number;
     plan_limit: number;
@@ -82,6 +94,7 @@ const actionUrl = (
  */
 export default function SpaceInbox({
     space,
+    public_url,
     testimonials,
     live_count,
     plan_limit,
@@ -163,13 +176,14 @@ export default function SpaceInbox({
                             <p className="max-w-md text-sm text-muted-foreground">
                                 Share your public link with customers —
                                 <br />
-                                <Link
-                                    href={`/s/${space.slug}`}
-                                    className="font-medium text-foreground underline-offset-4 hover:underline"
+                                <a
+                                    href={public_url}
+                                    className="font-medium break-all text-foreground underline-offset-4 hover:underline"
                                     target="_blank"
+                                    rel="noopener noreferrer"
                                 >
-                                    /s/{space.slug}
-                                </Link>{' '}
+                                    {public_url}
+                                </a>{' '}
                                 — and the submissions will appear here as they
                                 come in.
                             </p>
@@ -269,9 +283,16 @@ function TestimonialRow({
 
     return (
         <article className="flex flex-col gap-3 rounded-xl border border-sidebar-border/70 p-4 transition hover:border-sidebar-border hover:shadow-sm">
-            <header className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
+            <header className="flex flex-wrap items-start justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-3">
                     <Avatar>
+                        {testimonial.photo_url && (
+                            <AvatarImage
+                                src={testimonial.photo_url}
+                                alt=""
+                                className="object-cover"
+                            />
+                        )}
                         <AvatarFallback className="text-xs font-medium">
                             {initials || '?'}
                         </AvatarFallback>
@@ -300,6 +321,15 @@ function TestimonialRow({
                     )}
                     {!testimonial.is_wall_of_love && (
                         <Badge variant="secondary">Off wall</Badge>
+                    )}
+                    {!testimonial.consent_given && (
+                        <Badge
+                            variant="outline"
+                            title="The submitter didn't allow public sharing"
+                        >
+                            <ShieldOff className="size-3" />
+                            No sharing consent
+                        </Badge>
                     )}
                 </div>
             </header>
@@ -372,10 +402,16 @@ function TestimonialRow({
                     size="sm"
                     onClick={onToggleWallOfLove}
                     aria-pressed={testimonial.is_wall_of_love}
+                    disabled={
+                        !testimonial.is_wall_of_love &&
+                        !testimonial.consent_given
+                    }
                     title={
                         testimonial.is_wall_of_love
                             ? 'Remove from wall of love'
-                            : 'Publish to wall of love'
+                            : testimonial.consent_given
+                              ? 'Publish to wall of love'
+                              : "Can't publish — no sharing consent"
                     }
                 >
                     <Heart
@@ -387,39 +423,42 @@ function TestimonialRow({
                     />
                     {testimonial.is_wall_of_love ? 'On wall' : 'Wall'}
                 </Button>
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={onToggleHidden}
-                    aria-pressed={testimonial.is_hidden}
-                    title={testimonial.is_hidden ? 'Make visible' : 'Hide'}
-                >
-                    {testimonial.is_hidden ? (
-                        <EyeOff className="size-4" />
-                    ) : (
-                        <Eye className="size-4" />
-                    )}
-                    {testimonial.is_hidden ? 'Hidden' : 'Hide'}
-                </Button>
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={onEdit}
-                >
-                    <Pencil className="size-4" />
-                    Edit
-                </Button>
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={onDelete}
-                >
-                    <Trash2 className="size-4" />
-                    Delete
-                </Button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            aria-label="More actions"
+                        >
+                            <MoreHorizontal className="size-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={onEdit}>
+                            <Pencil className="size-4" />
+                            Edit testimonial
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={onToggleHidden}>
+                            {testimonial.is_hidden ? (
+                                <Eye className="size-4" />
+                            ) : (
+                                <EyeOff className="size-4" />
+                            )}
+                            {testimonial.is_hidden
+                                ? 'Show testimonial'
+                                : 'Hide testimonial'}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            variant="destructive"
+                            onSelect={onDelete}
+                        >
+                            <Trash2 className="size-4" />
+                            Delete testimonial
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </footer>
         </article>
     );

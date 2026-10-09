@@ -157,4 +157,76 @@ class EmbedWidgetControllerTest extends TestCase
         $this->assertStringNotContainsString('super-private@example.com', $response->getContent());
         $this->assertStringNotContainsString('"email"', $response->getContent());
     }
+
+    public function test_frame_applies_background_color_to_the_page_background_variable(): void
+    {
+        $user = User::factory()->create();
+        $space = Space::factory()->for($user)->create();
+        EmbedConfiguration::factory()->for($space)->create([
+            'background_color' => '#0F172A',
+        ]);
+
+        $response = $this->get(route('embed.frame', ['publicId' => $space->public_id]));
+
+        $response->assertOk();
+        // body paints var(--bg), so the color must land on the variable,
+        // not on <html>'s own background (which body would cover).
+        $response->assertSee('style="--bg: #0F172A;"', false);
+    }
+
+    public function test_frame_disables_animation_when_config_turns_it_off(): void
+    {
+        $user = User::factory()->create();
+        $space = Space::factory()->for($user)->create();
+        EmbedConfiguration::factory()->for($space)->create([
+            'animation_enabled' => false,
+        ]);
+
+        $response = $this->get(route('embed.frame', ['publicId' => $space->public_id]));
+
+        $response->assertOk();
+        $response->assertSee('class="no-animation"', false);
+    }
+
+    public function test_frame_keeps_animation_when_config_enables_it(): void
+    {
+        $user = User::factory()->create();
+        $space = Space::factory()->for($user)->create();
+        EmbedConfiguration::factory()->for($space)->create([
+            'animation_enabled' => true,
+        ]);
+
+        $response = $this->get(route('embed.frame', ['publicId' => $space->public_id]));
+
+        $response->assertOk();
+        $response->assertDontSee('class="no-animation"', false);
+    }
+
+    public function test_frame_respects_animation_query_override(): void
+    {
+        $user = User::factory()->create();
+        $space = Space::factory()->for($user)->create();
+
+        $response = $this->get(
+            route('embed.frame', ['publicId' => $space->public_id]).'?animation=0',
+        );
+
+        $response->assertOk();
+        $response->assertSee('class="no-animation"', false);
+    }
+
+    public function test_frame_reports_its_height_to_the_loader(): void
+    {
+        $user = User::factory()->create();
+        $space = Space::factory()->for($user)->create();
+
+        $response = $this->get(route('embed.frame', ['publicId' => $space->public_id]));
+
+        $response->assertOk();
+        $response->assertSee('testimonial-embed:resize', false);
+        $this->assertStringContainsString(
+            'testimonial-embed:resize',
+            (string) file_get_contents(public_path('embed.js')),
+        );
+    }
 }

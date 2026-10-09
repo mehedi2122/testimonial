@@ -28,8 +28,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // therefore no CSRF cookie to validate. CSRF protection for the
         // endpoint comes from the rate limiter (60/IP/hour) and from server
         // owning consent validation, not from a Laravel CSRF cookie.
+        //
+        // Stripe webhooks are server-to-server; authenticity comes from the
+        // Stripe-Signature header Cashier verifies, not a CSRF cookie.
         $middleware->validateCsrfTokens(except: [
             's/*/submissions',
+            'stripe/webhook',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -250,4 +250,51 @@ class InboxTest extends TestCase
                 ->where('live_count', 1)
             );
     }
+
+    public function test_wall_of_love_is_refused_without_sharing_consent(): void
+    {
+        $user = User::factory()->create();
+        $space = Space::factory()->for($user)->create();
+        $testimonial = Testimonial::factory()->for($space)->create([
+            'consent_given' => false,
+            'is_wall_of_love' => false,
+        ]);
+
+        $this->actingAs($user)
+            ->from(route('spaces.inbox', ['space' => $space->slug]))
+            ->post(route('spaces.inbox.wall-of-love', ['space' => $space->slug, 'testimonial' => $testimonial->id]))
+            ->assertSessionHas('error');
+
+        $this->assertFalse($testimonial->fresh()?->is_wall_of_love);
+    }
+
+    public function test_wall_of_love_can_always_be_turned_off(): void
+    {
+        $user = User::factory()->create();
+        $space = Space::factory()->for($user)->create();
+        $testimonial = Testimonial::factory()->for($space)->create([
+            'consent_given' => false,
+            'is_wall_of_love' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('spaces.inbox.wall-of-love', ['space' => $space->slug, 'testimonial' => $testimonial->id]))
+            ->assertSessionHas('success');
+
+        $this->assertFalse($testimonial->fresh()?->is_wall_of_love);
+    }
+
+    public function test_inbox_exposes_consent_and_never_a_storage_path(): void
+    {
+        $user = User::factory()->create();
+        $space = Space::factory()->for($user)->create();
+        Testimonial::factory()->for($space)->create(['consent_given' => false]);
+
+        $this->actingAs($user)
+            ->get(route('spaces.inbox', ['space' => $space->slug]))
+            ->assertInertia(fn ($page) => $page
+                ->where('testimonials.0.consent_given', false)
+                ->where('testimonials.0.photo_url', null)
+            );
+    }
 }

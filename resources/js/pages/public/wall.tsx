@@ -1,6 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { Pin, Star } from 'lucide-react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 
 type SpaceData = {
@@ -23,6 +23,7 @@ type TestimonialData = {
     rating: number | null;
     submitted_at: string | null;
     is_favorite: boolean;
+    photo_url: string | null;
     fields: FieldData[];
 };
 
@@ -36,8 +37,8 @@ type WallPageProps = {
  * Public Wall of Love page (OpenSpec change: public-wall-of-love).
  *
  * The page respondents / prospects / press see at `/wall/{slug}`.
- * Mirrors `submit.tsx`'s `<section className="... space-theme-{theme}">`
- * chrome (no `AppShell`, no nav — public surface). Header with
+ * Mirrors `submit.tsx`: a full-page `space-theme-{theme}` wrapper
+ * (PRD §10), no `AppShell`, no nav — public surface. Header with
  * `space.title` + `space.subtitle` + count line. Responsive masonry
  * grid (1/2/3 columns) of testimonial cards. Empty state card when
  * `count === 0`.
@@ -53,54 +54,58 @@ export default function PublicWall({
     count,
 }: WallPageProps) {
     return (
-        <section
-            className={`mx-auto max-w-6xl space-y-8 p-6 space-theme-${space.theme}`}
+        <div
+            className={`min-h-screen bg-background text-foreground space-theme-${space.theme}`}
         >
-            <Head
-                title={
-                    count > 0 ? `${space.name} — Wall of Love` : `${space.name}`
-                }
-            />
+            <section className="mx-auto max-w-6xl space-y-8 px-4 py-10 sm:px-6">
+                <Head
+                    title={
+                        count > 0
+                            ? `${space.name} — Wall of Love`
+                            : `${space.name}`
+                    }
+                />
 
-            <header className="space-y-2 text-center sm:text-left">
-                <h1 className="text-4xl font-semibold tracking-tight">
-                    {space.title}
-                </h1>
-                {space.subtitle && (
-                    <p className="text-lg text-muted-foreground">
-                        {space.subtitle}
+                <header className="space-y-2 text-center sm:text-left">
+                    <h1 className="text-4xl font-semibold tracking-tight">
+                        {space.title}
+                    </h1>
+                    {space.subtitle && (
+                        <p className="text-lg text-muted-foreground">
+                            {space.subtitle}
+                        </p>
+                    )}
+                    <p className="text-sm text-muted-foreground">
+                        {count === 0
+                            ? 'No testimonials yet'
+                            : `${count} testimonial${count === 1 ? '' : 's'} from the community`}
                     </p>
-                )}
-                <p className="text-sm text-muted-foreground">
-                    {count === 0
-                        ? 'No testimonials yet'
-                        : `${count} testimonial${count === 1 ? '' : 's'} from the community`}
-                </p>
-            </header>
+                </header>
 
-            {count === 0 ? (
-                <Card className="mx-auto max-w-md">
-                    <CardContent className="space-y-2 p-6 text-center text-sm text-muted-foreground">
-                        <p className="text-base font-medium text-foreground">
-                            No testimonials yet
-                        </p>
-                        <p>
-                            This Space hasn't collected any public testimonials.
-                            Check back soon.
-                        </p>
-                    </CardContent>
-                </Card>
-            ) : (
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                    {testimonials.map((testimonial) => (
-                        <TestimonialCard
-                            key={testimonial.id}
-                            testimonial={testimonial}
-                        />
-                    ))}
-                </div>
-            )}
-        </section>
+                {count === 0 ? (
+                    <Card className="mx-auto max-w-md">
+                        <CardContent className="space-y-2 p-6 text-center text-sm text-muted-foreground">
+                            <p className="text-base font-medium text-foreground">
+                                No testimonials yet
+                            </p>
+                            <p>
+                                This Space hasn't collected any public
+                                testimonials. Check back soon.
+                            </p>
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                        {testimonials.map((testimonial) => (
+                            <TestimonialCard
+                                key={testimonial.id}
+                                testimonial={testimonial}
+                            />
+                        ))}
+                    </div>
+                )}
+            </section>
+        </div>
     );
 }
 
@@ -112,7 +117,7 @@ function TestimonialCard({ testimonial }: { testimonial: TestimonialData }) {
         .join('');
 
     return (
-        <article className="relative flex flex-col gap-3 rounded-xl border border-sidebar-border/70 bg-card p-5 shadow-xs">
+        <article className="relative flex flex-col gap-3 rounded-[var(--radius)] border bg-card p-5 text-card-foreground shadow-xs">
             {testimonial.is_favorite && (
                 <span
                     aria-label="Pinned to top"
@@ -125,6 +130,13 @@ function TestimonialCard({ testimonial }: { testimonial: TestimonialData }) {
 
             <header className="flex items-center gap-3">
                 <Avatar>
+                    {testimonial.photo_url && (
+                        <AvatarImage
+                            src={testimonial.photo_url}
+                            alt=""
+                            className="object-cover"
+                        />
+                    )}
                     <AvatarFallback className="text-xs font-medium">
                         {initials || '?'}
                     </AvatarFallback>
@@ -177,19 +189,19 @@ function TestimonialCard({ testimonial }: { testimonial: TestimonialData }) {
                             <dt className="font-medium text-muted-foreground">
                                 {field.label}:
                             </dt>
-                            {field.type === 'url' ? (
+                            {field.type === 'url' && isWebUrl(field.value) ? (
                                 <dd>
                                     <a
                                         href={field.value}
                                         target="_blank"
-                                        rel="noopener noreferrer"
+                                        rel="noopener noreferrer nofollow ugc"
                                         className="break-all text-primary underline-offset-2 hover:underline"
                                     >
                                         {field.value}
                                     </a>
                                 </dd>
                             ) : (
-                                <dd>{field.value}</dd>
+                                <dd className="break-all">{field.value}</dd>
                             )}
                         </div>
                     ))}
@@ -209,4 +221,14 @@ function formatDate(iso: string): string {
         month: 'short',
         day: 'numeric',
     });
+}
+
+/** Only http(s) links are rendered as links; anything else is plain text. */
+function isWebUrl(value: string): boolean {
+    try {
+        const url = new URL(value);
+        return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch {
+        return false;
+    }
 }

@@ -7,8 +7,11 @@ namespace App\Http\Controllers\Spaces;
 use App\Actions\CreateSpaceAction;
 use App\Actions\Dashboards\DashboardAnalyticsAction;
 use App\Actions\Embeds\UpdateEmbedConfigurationAction;
+use App\Actions\Photos\StoreTestimonialPhotoAction;
+use App\Actions\Spaces\UpdateSpaceFieldModesAction;
 use App\Actions\UpdateSpaceSettingsAction;
 use App\Enums\EmbedLayout;
+use App\Enums\SpaceFieldType;
 use App\Enums\SpaceTheme;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateSpaceRequest;
@@ -75,13 +78,14 @@ class SpaceController extends Controller
      * Render the create form. The page receives all SpaceTheme cases so
      * the picker stays a thin UI shim over the enum — no hardcoded list.
      */
-    public function create(): Response
+    public function create(UpdateSpaceFieldModesAction $fieldModes): Response
     {
         return Inertia::render('spaces/create', [
+            'fields' => $fieldModes->defaults(),
             'themes' => array_map(
                 fn (SpaceTheme $theme): array => [
                     'value' => $theme->value,
-                    'label' => $theme->name,
+                    'label' => $theme->label().' — '.$theme->description(),
                 ],
                 SpaceTheme::cases(),
             ),
@@ -96,23 +100,42 @@ class SpaceController extends Controller
     public function store(
         CreateSpaceRequest $request,
         CreateSpaceAction $action,
+        UpdateSpaceFieldModesAction $fieldModes,
     ): RedirectResponse {
         $user = $request->user();
 
         if ($violation = $action->checkPlanLimit($user)) {
             return redirect()
                 ->route('spaces.index')
-                ->with(
-                    'error',
-                    "You've reached your {$violation['plan']->value} plan limit of {$violation['limit']} Spaces. Upgrade to Pro to create more."
-                );
+                ->with('error', $violation['plan']->spaceLimitMessage());
         }
 
-        $space = $action->create($user, $request->validated());
+        $validated = $request->validated();
+        $space = $action->create($user, $validated);
+        $fieldModes->apply($space, $validated['fields'] ?? []);
 
-        return redirect()
-            ->route('spaces.dashboard', ['space' => $space->slug])
-            ->with('success', "Space \"{$space->name}\" created.");
+        return redirect()->route('spaces.created', ['space' => $space->slug]);
+    }
+
+    /**
+     * Space-creation success page (PRD §11): the public URL with Copy
+     * Link and View Space, plus a way on to the dashboard. Reachable
+     * any time, not only straight after `store`, so a refresh or a
+     * bookmarked link still works.
+     */
+    public function created(Space $space): Response
+    {
+        Gate::authorize('view', $space);
+
+        return Inertia::render('spaces/created', [
+            'space' => [
+                'slug' => $space->slug,
+                'name' => $space->name,
+                'title' => $space->title,
+            ],
+            'public_url' => $space->publicSubmissionUrl(),
+            'wall_url' => $space->publicWallUrl(),
+        ]);
     }
 
     /**
@@ -186,6 +209,7 @@ class SpaceController extends Controller
                 'slug' => $space->slug,
                 'name' => $space->name,
             ],
+            'public_url' => $space->publicSubmissionUrl(),
             'testimonials' => $testimonials->map(fn (Testimonial $t): array => [
                 'id' => $t->id,
                 'name' => $t->name,
@@ -195,12 +219,18 @@ class SpaceController extends Controller
                 'is_favorite' => $t->is_favorite,
                 'is_wall_of_love' => $t->is_wall_of_love,
                 'is_hidden' => $t->is_hidden,
+                'consent_given' => $t->consent_given,
                 'submitted_at' => $t->submitted_at->toIso8601String(),
-                'values' => $t->values->map(fn (TestimonialValue $v): array => [
-                    'field_key' => $v->spaceField?->field_key,
-                    'label' => $v->spaceField?->label,
-                    'value' => $v->value,
-                ])->all(),
+                // The owner sees every stored photo; the URL still goes
+                // through TestimonialPhotoController's access check.
+                'photo_url' => $this->ownerPhotoUrl($t),
+                'values' => $t->values
+                    ->reject(fn (TestimonialValue $v): bool => $v->spaceField?->type === SpaceFieldType::Image)
+                    ->map(fn (TestimonialValue $v): array => [
+                        'field_key' => $v->spaceField?->field_key,
+                        'label' => $v->spaceField?->label,
+                        'value' => $v->value,
+                    ])->values()->all(),
             ])->all(),
             'live_count' => $testimonials->count(),
             'plan_limit' => $limit,
@@ -255,10 +285,14 @@ class SpaceController extends Controller
                 'rating' => $t->rating,
                 'is_favorite' => $t->is_favorite,
                 'submitted_at' => $t->submitted_at->toIso8601String(),
+                // Image answers become a photo URL (never the storage path).
                 'values' => $t->values->map(fn (TestimonialValue $v): array => [
                     'field_key' => $v->spaceField?->field_key,
                     'label' => $v->spaceField?->label,
-                    'value' => $v->value,
+                    'type' => $v->spaceField?->type->value,
+                    'value' => $v->spaceField?->type === SpaceFieldType::Image
+                        ? (StoreTestimonialPhotoAction::isStoredPath($v->value) ? route('photos.show', ['value' => $v->id]) : null)
+                        : $v->value,
                 ])->all(),
             ])->all();
 
@@ -339,11 +373,12 @@ class SpaceController extends Controller
      * shim over the enum. `public_id` is shipped read-only so the
      * owner can copy the embed snippet without leaving the page.
      */
-    public function settings(Space $space): Response
+    public function settings(Space $space, UpdateSpaceFieldModesAction $fieldModes): Response
     {
         Gate::authorize('view', $space);
 
         return Inertia::render('spaces/settings', [
+            'fields' => $fieldModes->describe($space),
             'space' => [
                 'id' => $space->id,
                 'slug' => $space->slug,
@@ -359,7 +394,7 @@ class SpaceController extends Controller
             'themes' => array_map(
                 fn (SpaceTheme $theme): array => [
                     'value' => $theme->value,
-                    'label' => $theme->name,
+                    'label' => $theme->label().' — '.$theme->description(),
                 ],
                 SpaceTheme::cases(),
             ),
@@ -379,13 +414,26 @@ class SpaceController extends Controller
         Space $space,
         UpdateSpaceRequest $request,
         UpdateSpaceSettingsAction $action,
+        UpdateSpaceFieldModesAction $fieldModes,
     ): RedirectResponse {
         Gate::authorize('update', $space);
 
-        $space = $action->update($space, $request->validated());
+        $validated = $request->validated();
+        $space = $action->update($space, $validated);
+        $fieldModes->apply($space, $validated['fields'] ?? []);
 
         return redirect()
             ->route('spaces.settings', ['space' => $space->slug])
             ->with('success', 'Settings saved.');
+    }
+
+    private function ownerPhotoUrl(Testimonial $testimonial): ?string
+    {
+        $photo = $testimonial->values->first(
+            fn (TestimonialValue $v): bool => $v->spaceField?->type === SpaceFieldType::Image
+                && StoreTestimonialPhotoAction::isStoredPath($v->value),
+        );
+
+        return $photo === null ? null : route('photos.show', ['value' => $photo->id]);
     }
 }

@@ -1,4 +1,4 @@
-import type { Auth } from '@/types/auth';
+import type { Auth, SpaceSummary } from '@/types/auth';
 
 declare module 'react' {
     interface InputHTMLAttributes<T> {
@@ -11,6 +11,8 @@ declare module '@inertiajs/core' {
         sharedPageProps: {
             name: string;
             auth: Auth;
+            currentSpace: SpaceSummary | null;
+            flash?: { success?: string; error?: string };
             sidebarOpen: boolean;
             [key: string]: unknown;
         };
